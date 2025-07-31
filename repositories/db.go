@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/blog-platform/domain"
+	"github.com/abeni-al7/blog-platform/domain"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

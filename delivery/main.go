@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 
-	"github.com/blog-platform/delivery/routers"
-	"github.com/blog-platform/infrastructure"
-	"github.com/blog-platform/repositories"
+	"github.com/abeni-al7/blog-platform/delivery/routers"
+	"github.com/abeni-al7/blog-platform/infrastructure"
+	"github.com/abeni-al7/blog-platform/repositories"
 	"github.com/joho/godotenv"
 )
 
