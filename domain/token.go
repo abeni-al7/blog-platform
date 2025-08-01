@@ -3,6 +3,7 @@ package domain
 import (
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
@@ -16,4 +17,10 @@ type Token struct {
     User    User   `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"` // GORM relation
 	CreatedAt time.Time `json:"created_at"`// auto set on insert
     UpdatedAt time.Time `json:"updated_at"` // auto set on update
+}
+
+type TokenClaims struct {
+	UserID string `json:"user_id"`
+	UserRole string `json:"user_role"`
+	jwt.RegisteredClaims
 }
