@@ -56,4 +56,5 @@ type IUserController interface {
 
 type IAIService interface {
 	GenerateBlogIdeas(topic string) (string, error)
+	SuggestBlogImprovements(content string) (string, error)
 }
