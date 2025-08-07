@@ -53,3 +53,7 @@ type IUserController interface {
 	Register(ctx *context.Context)
 	ActivateAccount(ctx *context.Context)
 }
+
+type IAIService interface {
+	GenerateBlogIdeas(topic string) (string, error)
+}
