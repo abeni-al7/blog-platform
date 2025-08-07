@@ -9,4 +9,5 @@ func RegisterBlogRoutes(router *gin.Engine, blogController *controllers.BlogCont
 	router.POST("/blogs", blogController.CreateBlog)
 	router.GET("/blogs", blogController.GetBlogs)
 	router.POST("/blogs/ideas", blogController.GenerateBlogIdeas)
+	router.POST("/blogs/improve", blogController.SuggestBlogImprovements)
 }
