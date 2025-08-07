@@ -59,3 +59,26 @@ func (c *BlogController) GetBlogs(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{"blogs": blogs})
 }
+
+type BlogIdeaRequest struct {
+	Topic string `json:"topic" binding:"required"`
+}
+
+func (c *BlogController) GenerateBlogIdeas(ctx *gin.Context) {
+	var req BlogIdeaRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	aiService, ok := c.blogUsecase.(interface{ GetAIService() domain.IAIService })
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "AI service not available"})
+		return
+	}
+	ideas, err := aiService.GetAIService().GenerateBlogIdeas(req.Topic)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"ideas": ideas})
+}
