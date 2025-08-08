@@ -101,6 +101,7 @@ func (infra *JWTInfrastructure) validateToken(authHeader string, secret []byte) 
 	}
 
 	if exp.Time.Before(time.Now()) {
+		_ = infra.TokenRepo.Delete(tokenString)
 		return nil, errors.New("token is expired")
 	}
 

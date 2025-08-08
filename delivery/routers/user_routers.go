@@ -24,6 +24,7 @@ func AuthRoutes(group *gin.RouterGroup) {
 	group.POST("/register", uc.Register)
 	group.POST("/login", uc.Login)
 	group.POST("/token/refresh", uc.RefreshToken)
+	group.POST("/logout", ao.AuthMiddleware(), uc.Logout)
 	group.POST("/reset-password", ao.AuthMiddleware(), uc.ResetPassword)
 	group.POST("/forgot-password", uc.ForgotPassword)
 	group.POST("/password/:id/update", uc.UpdatePasswordDirect)
