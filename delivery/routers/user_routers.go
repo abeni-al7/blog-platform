@@ -10,6 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// AuthRoutes registers authentication and user management routes on the provided Gin router group.
+// It sets up endpoints for user registration, login, profile retrieval, and admin-only user promotion and demotion, applying appropriate authentication and authorization middleware.
 func AuthRoutes(group *gin.RouterGroup) {
 	DB := repositories.DB
 	ur := repositories.NewUserRepository(DB)
@@ -24,4 +26,10 @@ func AuthRoutes(group *gin.RouterGroup) {
 	group.POST("/register", uc.Register)
 	group.POST("/login", uc.Login)
 	group.GET("/users/:id", ao.AccountOwnerMiddleware(), uc.GetProfile)
+	adminRoutes := group.Group("/users")
+	adminRoutes.Use(ao.AuthMiddleware(), ao.AdminMiddleware())
+	{
+		adminRoutes.PUT("/:id/promote", uc.Promote)
+		adminRoutes.PUT("/:id/demote", uc.Demote)
+	}
 }
