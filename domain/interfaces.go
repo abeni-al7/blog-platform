@@ -10,7 +10,9 @@ type IBlogRepository interface {
 	LinkTagToBlog(ctx context.Context, blogID int64, tagID int64) error
 	FetchByID(ctx context.Context, id int64) (*Blog, error)
 	FetchAll(ctx context.Context) ([]*Blog, error)
+
 	FetchPaginatedBlogs(ctx context.Context, page int, limit int) ([]*Blog, int64, error)
+
 }
 
 type IBlogUsecase interface {
@@ -45,6 +47,10 @@ type IUserUsecase interface {
 	Register(user *User) (User, error)
 	ActivateAccount(id string) error
 	Login(identifier string, password string) (string, string, error)
+	GetUserProfile(userID int64) (*User, error)
+	UpdateUserProfile(userID int64, updates map[string]interface{}) error
+	RefreshToken(authHeader string) (string, string, error)
+	ResetPassword(userID string, oldPassword string, newPassword string) error
 }
 
 type IUserRepository interface {
@@ -53,10 +59,19 @@ type IUserRepository interface {
 	FetchByEmail(email string) (User, error)
 	ActivateAccount(idStr string) error
 	Fetch(idStr string) (User, error)
+	GetUserProfile(userID int64) (*User, error)
+	UpdateUserProfile(userID int64, updates map[string]interface{}) error
+	ResetPassword(idStr string, newPassword string) error
 }
 
 type IUserController interface {
 	Register(ctx *context.Context)
 	ActivateAccount(ctx *context.Context)
 	Login(ctx *context.Context)
+
+	GetProfile(ctx *context.Context)
+	UpdateProfile(ctx *context.Context)
+	RefreshToken(ctx *context.Context)
+	ResetPassword(ctx *context.Context)
+
 }

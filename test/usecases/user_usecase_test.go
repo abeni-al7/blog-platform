@@ -283,6 +283,183 @@ func (suite *UserUsecaseTestSuite) TestLogin_SaveRefreshTokenError() {
 	suite.Error(err)
 }
 
+func (suite *UserUsecaseTestSuite) TestGetUserProfile_Success() {
+	expectedUser := &domain.User{ID: 1, Username: "testuser", Email: "test@example.com"}
+	suite.userRepo.On("GetUserProfile", int64(1)).Return(expectedUser, nil)
+	user, err := suite.userUsecase.GetUserProfile(1)
+	suite.NoError(err)
+	suite.Equal(expectedUser, user)
+}
+
+func (suite *UserUsecaseTestSuite) TestGetUserProfile_NotFound() {
+	suite.userRepo.On("GetUserProfile", int64(2)).Return(nil, nil)
+	user, err := suite.userUsecase.GetUserProfile(2)
+	suite.NoError(err)
+	suite.Nil(user)
+}
+
+func (suite *UserUsecaseTestSuite) TestUpdateUserProfile_Success() {
+	userID := int64(1)
+	updates := map[string]interface{}{
+		"Username": "updateduser",
+		"Bio":      "updated bio",
+	}
+	suite.userRepo.On("UpdateUserProfile", userID, updates).Return(nil)
+	err := suite.userUsecase.UpdateUserProfile(userID, updates)
+	suite.NoError(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestUpdateUserProfile_NoFields() {
+	userID := int64(1)
+	updates := map[string]interface{}{}
+	suite.userRepo.On("UpdateUserProfile", userID, updates).Return(nil)
+	err := suite.userUsecase.UpdateUserProfile(userID, updates)
+	suite.NoError(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestRefreshToken_Success() {
+	jwtMock := new(mocks.MockJWTService)
+	tokenMock := new(mocks.MockTokenRepository)
+	suite.jwtService = jwtMock
+	suite.tokenRepo = tokenMock
+	suite.userUsecase = usecases.NewUserUsecase(suite.userRepo, suite.emailService, suite.pwdService, jwtMock, tokenMock)
+	claims := &domain.TokenClaims{UserID: "1", UserRole: "user"}
+	authHeader := "Bearer old_refresh"
+	jwtMock.On("ValidateRefreshToken", authHeader).Return(claims, nil)
+	jwtMock.On("GenerateAccessToken", "1", "user").Return("new_access", nil)
+	jwtMock.On("GenerateRefreshToken", "1", "user").Return("new_refresh", nil)
+	tokenMock.On("Save", mock.AnythingOfType("*domain.Token")).Return(nil).Twice()
+	access, refresh, err := suite.userUsecase.RefreshToken(authHeader)
+	suite.NoError(err)
+	suite.Equal("new_access", access)
+	suite.Equal("new_refresh", refresh)
+}
+
+func (suite *UserUsecaseTestSuite) TestRefreshToken_ValidateError() {
+	jwtMock := new(mocks.MockJWTService)
+	tokenMock := new(mocks.MockTokenRepository)
+	suite.jwtService = jwtMock
+	suite.tokenRepo = tokenMock
+	suite.userUsecase = usecases.NewUserUsecase(suite.userRepo, suite.emailService, suite.pwdService, jwtMock, tokenMock)
+	authHeader := "Bearer bad"
+	jwtMock.On("ValidateRefreshToken", authHeader).Return((*domain.TokenClaims)(nil), errors.New("invalid token"))
+	_, _, err := suite.userUsecase.RefreshToken(authHeader)
+	suite.Error(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestRefreshToken_GenerateAccessTokenError() {
+	jwtMock := new(mocks.MockJWTService)
+	tokenMock := new(mocks.MockTokenRepository)
+	suite.jwtService = jwtMock
+	suite.tokenRepo = tokenMock
+	suite.userUsecase = usecases.NewUserUsecase(suite.userRepo, suite.emailService, suite.pwdService, jwtMock, tokenMock)
+	authHeader := "Bearer old_refresh"
+	claims := &domain.TokenClaims{UserID: "1", UserRole: "user"}
+	jwtMock.On("ValidateRefreshToken", authHeader).Return(claims, nil)
+	jwtMock.On("GenerateAccessToken", "1", "user").Return("", errors.New("gen err"))
+	_, _, err := suite.userUsecase.RefreshToken(authHeader)
+	suite.Error(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestRefreshToken_GenerateRefreshTokenError() {
+	jwtMock := new(mocks.MockJWTService)
+	tokenMock := new(mocks.MockTokenRepository)
+	suite.jwtService = jwtMock
+	suite.tokenRepo = tokenMock
+	suite.userUsecase = usecases.NewUserUsecase(suite.userRepo, suite.emailService, suite.pwdService, jwtMock, tokenMock)
+	authHeader := "Bearer old_refresh"
+	claims := &domain.TokenClaims{UserID: "1", UserRole: "user"}
+	jwtMock.On("ValidateRefreshToken", authHeader).Return(claims, nil)
+	jwtMock.On("GenerateAccessToken", "1", "user").Return("new_access", nil)
+	jwtMock.On("GenerateRefreshToken", "1", "user").Return("", errors.New("gen err"))
+	_, _, err := suite.userUsecase.RefreshToken(authHeader)
+	suite.Error(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestRefreshToken_SaveAccessTokenError() {
+	jwtMock := new(mocks.MockJWTService)
+	tokenMock := new(mocks.MockTokenRepository)
+	suite.jwtService = jwtMock
+	suite.tokenRepo = tokenMock
+	suite.userUsecase = usecases.NewUserUsecase(suite.userRepo, suite.emailService, suite.pwdService, jwtMock, tokenMock)
+	authHeader := "Bearer old_refresh"
+	claims := &domain.TokenClaims{UserID: "1", UserRole: "user"}
+	jwtMock.On("ValidateRefreshToken", authHeader).Return(claims, nil)
+	jwtMock.On("GenerateAccessToken", "1", "user").Return("new_access", nil)
+	jwtMock.On("GenerateRefreshToken", "1", "user").Return("new_refresh", nil)
+	tokenMock.On("Save", mock.AnythingOfType("*domain.Token")).Return(errors.New("db err")).Once()
+	_, _, err := suite.userUsecase.RefreshToken(authHeader)
+	suite.Error(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestRefreshToken_SaveRefreshTokenError() {
+	jwtMock := new(mocks.MockJWTService)
+	tokenMock := new(mocks.MockTokenRepository)
+	suite.jwtService = jwtMock
+	suite.tokenRepo = tokenMock
+	suite.userUsecase = usecases.NewUserUsecase(suite.userRepo, suite.emailService, suite.pwdService, jwtMock, tokenMock)
+	authHeader := "Bearer old_refresh"
+	claims := &domain.TokenClaims{UserID: "1", UserRole: "user"}
+	jwtMock.On("ValidateRefreshToken", authHeader).Return(claims, nil)
+	jwtMock.On("GenerateAccessToken", "1", "user").Return("new_access", nil)
+	jwtMock.On("GenerateRefreshToken", "1", "user").Return("new_refresh", nil)
+	tokenMock.On("Save", mock.AnythingOfType("*domain.Token")).Return(nil).Once()
+	tokenMock.On("Save", mock.AnythingOfType("*domain.Token")).Return(errors.New("db err")).Once()
+	_, _, err := suite.userUsecase.RefreshToken(authHeader)
+	suite.Error(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestResetPassword_Success() {
+	user := domain.User{ID: 1, Password: "old_hashed"}
+	suite.userRepo.On("Fetch", "1").Return(user, nil)
+	suite.pwdService.On("ComparePassword", []byte("old_hashed"), []byte("OldPass123!")).Return(nil)
+	suite.pwdService.On("HashPassword", "NewPass123!").Return("new_hashed", nil)
+	suite.userRepo.On("ResetPassword", "1", "new_hashed").Return(nil)
+	err := suite.userUsecase.ResetPassword("1", "OldPass123!", "NewPass123!")
+	suite.NoError(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestResetPassword_UserNotFound() {
+	suite.userRepo.On("Fetch", "1").Return(domain.User{}, errors.New("not found"))
+	err := suite.userUsecase.ResetPassword("1", "OldPass123!", "NewPass123!")
+	suite.Error(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestResetPassword_InvalidOldPassword() {
+	user := domain.User{ID: 1, Password: "old_hashed"}
+	suite.userRepo.On("Fetch", "1").Return(user, nil)
+	suite.pwdService.On("ComparePassword", []byte("old_hashed"), []byte("WrongOld123!")).Return(errors.New("mismatch"))
+	err := suite.userUsecase.ResetPassword("1", "WrongOld123!", "NewPass123!")
+	suite.Error(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestResetPassword_InvalidNewPasswordFormat() {
+	user := domain.User{ID: 1, Password: "old_hashed"}
+	suite.userRepo.On("Fetch", "1").Return(user, nil)
+	suite.pwdService.On("ComparePassword", []byte("old_hashed"), []byte("OldPass123!")).Return(nil)
+	err := suite.userUsecase.ResetPassword("1", "OldPass123!", "weak")
+	suite.Error(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestResetPassword_HashError() {
+	user := domain.User{ID: 1, Password: "old_hashed"}
+	suite.userRepo.On("Fetch", "1").Return(user, nil)
+	suite.pwdService.On("ComparePassword", []byte("old_hashed"), []byte("OldPass123!")).Return(nil)
+	suite.pwdService.On("HashPassword", "NewPass123!").Return("", errors.New("hash fail"))
+	err := suite.userUsecase.ResetPassword("1", "OldPass123!", "NewPass123!")
+	suite.Error(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestResetPassword_UpdateError() {
+	user := domain.User{ID: 1, Password: "old_hashed"}
+	suite.userRepo.On("Fetch", "1").Return(user, nil)
+	suite.pwdService.On("ComparePassword", []byte("old_hashed"), []byte("OldPass123!")).Return(nil)
+	suite.pwdService.On("HashPassword", "NewPass123!").Return("new_hashed", nil)
+	suite.userRepo.On("ResetPassword", "1", "new_hashed").Return(errors.New("db error"))
+	err := suite.userUsecase.ResetPassword("1", "OldPass123!", "NewPass123!")
+	suite.Error(err)
+}
+
 func TestUserUsecase(t *testing.T) {
 	suite.Run(t, new(UserUsecaseTestSuite))
 }

@@ -27,8 +27,8 @@ func (m *MockJWTService) ValidateAccessToken(authHeader string) (*domain.TokenCl
 	return args.Get(0).(*domain.TokenClaims), args.Error(1)
 }
 
-func (m *MockJWTService) ValidateRefreshToken(token string) (*domain.TokenClaims, error) {
-	args := m.Called(token)
+func (m *MockJWTService) ValidateRefreshToken(authHeader string) (*domain.TokenClaims, error) {
+	args := m.Called(authHeader)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
