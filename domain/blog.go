@@ -2,12 +2,11 @@ package domain
 
 import (
 	"time"
-
-	"gorm.io/gorm"
+	// "gorm.io/gorm"
 )
 
 type Blog struct {
-	gorm.Model
+	// gorm.Model
 	ID        int64     `gorm:"primaryKey;autoIncrement" json:"id"`
 	Title     string    `gorm:"type:varchar(500)" json:"title"`
 	Content   string    `json:"content"`

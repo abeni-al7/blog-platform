@@ -27,6 +27,6 @@ func AuthRoutes(group *gin.RouterGroup) {
 	group.POST("/reset-password", ao.AuthMiddleware(), uc.ResetPassword)
 	group.POST("/forgot-password", uc.ForgotPassword)
 	group.POST("/password/:id/update", uc.UpdatePasswordDirect)
-	group.GET("/users/:id", ao.AccountOwnerMiddleware(), uc.GetProfile)
-	group.PATCH("/users/:id", ao.AccountOwnerMiddleware(), uc.UpdateProfile)
+	group.GET("/users/:id", ao.AuthMiddleware(), uc.GetProfile)
+	group.PATCH("/users/:id", ao.AuthMiddleware(), uc.UpdateProfile)
 }
