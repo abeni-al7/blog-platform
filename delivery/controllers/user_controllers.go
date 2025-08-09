@@ -12,6 +12,7 @@ type UserRegisterDTO struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Role     string `json:"role"`
 }
 
 type UserLoginDTO struct {
@@ -46,6 +47,7 @@ func (uc *UserController) Register(ctx *gin.Context) {
 		Email:    userInput.Email,
 		Username: userInput.Username,
 		Password: userInput.Password,
+		Role:     userInput.Role,
 	}
 
 	user, err := uc.userUsecase.Register(&user)
