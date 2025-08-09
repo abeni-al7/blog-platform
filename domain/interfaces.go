@@ -48,9 +48,13 @@ type IUserUsecase interface {
 	ActivateAccount(id string) error
 	Login(identifier string, password string) (string, string, error)
 	GetUserProfile(userID int64) (*User, error)
+	Promote(id string) error
+	Demote(id string) error
 	UpdateUserProfile(userID int64, updates map[string]interface{}) error
 	RefreshToken(authHeader string) (string, string, error)
 	ResetPassword(userID string, oldPassword string, newPassword string) error
+	ForgotPassword(email string) error
+	UpdatePasswordDirect(userID string, newPassword string, token string) error
 }
 
 type IUserRepository interface {
@@ -60,6 +64,8 @@ type IUserRepository interface {
 	ActivateAccount(idStr string) error
 	Fetch(idStr string) (User, error)
 	GetUserProfile(userID int64) (*User, error)
+	Promote(idStr string) error
+	Demote(idStr string) error
 	UpdateUserProfile(userID int64, updates map[string]interface{}) error
 	ResetPassword(idStr string, newPassword string) error
 }
@@ -73,5 +79,8 @@ type IUserController interface {
 	UpdateProfile(ctx *context.Context)
 	RefreshToken(ctx *context.Context)
 	ResetPassword(ctx *context.Context)
+
+	ForgotPassword(ctx *context.Context)
+	UpdatePasswordDirect(ctx *context.Context)
 
 }

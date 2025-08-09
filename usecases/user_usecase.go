@@ -212,6 +212,23 @@ func (uu UserUsecase) GetUserProfile(userID int64) (*domain.User, error) {
 	return user, nil
 }
 
+func (uu *UserUsecase) Promote(id string) error {
+	_, err := uu.userRepo.Fetch(id)
+	if err != nil {
+		return errors.New("user not found")
+	}
+	return uu.userRepo.Promote(id)
+}
+
+func (uu *UserUsecase) Demote(id string) error {
+	_, err := uu.userRepo.Fetch(id)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	return uu.userRepo.Demote(id)
+}
+
 func (uu UserUsecase) UpdateUserProfile(userID int64, updates map[string]interface{}) error {
 	return uu.userRepo.UpdateUserProfile(userID, updates)
 }
@@ -235,6 +252,56 @@ func (uu *UserUsecase) ResetPassword(userID string, oldPassword string, newPassw
 		return errors.New("could not hash password")
 	}
 
+	if err := uu.userRepo.ResetPassword(userID, hashed); err != nil {
+		return errors.New("could not update password")
+	}
+	return nil
+}
+
+func (uu *UserUsecase) ForgotPassword(email string) error {
+	if email == "" {
+		return errors.New("email required")
+	}
+	user, err := uu.userRepo.FetchByEmail(email)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	accessToken, err := uu.jwtService.GenerateAccessToken(strconv.FormatInt(user.ID, 10), user.Role)
+	if err != nil {
+		return errors.New("could not generate reset token")
+	}
+
+	tokenObj := domain.Token{Type: "access", Content: accessToken, Status: "active", UserID: user.ID}
+	if err := uu.tokenRepo.Save(&tokenObj); err != nil {
+		return errors.New("could not persist reset token")
+	}
+
+	link := fmt.Sprintf("%v://%v:%v/password/%v/update?token=%v", os.Getenv("PROTOCOL"), os.Getenv("DOMAIN"), os.Getenv("PORT"), user.ID, accessToken)
+	if err := uu.emailService.SendEmail([]string{user.Email}, "Reset Password", link); err != nil {
+		return errors.New("could not send reset link")
+	}
+	return nil
+}
+func (uu *UserUsecase) UpdatePasswordDirect(userID string, newPassword string, token string) error {
+	if token == "" {
+		return errors.New("token required")
+	}
+
+	claims, err := uu.jwtService.ValidateAccessToken("Bearer " + token)
+	if err != nil {
+		return errors.New("invalid or expired token")
+	}
+	if claims.UserID != userID {
+		return errors.New("token does not match user")
+	}
+	if !uu.validatePassword(newPassword) {
+		return errors.New("password must be consisted of at least one uppercase character, one lowercase character, one punctuation character, one number and be at least of length 8")
+	}
+	hashed, err := uu.passwordService.HashPassword(newPassword)
+	if err != nil {
+		return errors.New("could not hash password")
+	}
 	if err := uu.userRepo.ResetPassword(userID, hashed); err != nil {
 		return errors.New("could not update password")
 	}
