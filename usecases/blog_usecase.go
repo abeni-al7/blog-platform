@@ -64,7 +64,7 @@ func (uc blogUsecase) FetchBlogByID(ctx context.Context, id int64) (*domain.Blog
 	}
 
 	return blog, nil
-
+}
 
 func (uc *blogUsecase) FetchAllBlogs(ctx context.Context) ([]*domain.Blog, error) {
 	blogs, err := uc.blogRepo.FetchAll(ctx)
@@ -72,4 +72,8 @@ func (uc *blogUsecase) FetchAllBlogs(ctx context.Context) ([]*domain.Blog, error
 		return nil, fmt.Errorf("failed to fetch blogs: %w", err)
 	}
 	return blogs, nil
+}
+
+func (uc *blogUsecase) FetchPaginatedBlogs(ctx context.Context, page, limit int) ([]*domain.Blog, int64, error) {
+	return uc.blogRepo.FetchPaginatedBlogs(ctx, page, limit)
 }

@@ -43,13 +43,13 @@ func (r *BlogRepository) LinkTagToBlog(ctx context.Context, blogID int64, tagID 
 	return r.db.WithContext(ctx).Create(&tagBlog).Error
 }
 
-
 func (r *BlogRepository) FetchByID(ctx context.Context, id int64) (*domain.Blog, error) {
 	var blog domain.Blog
 	if err := r.db.WithContext(ctx).Preload("User").Preload("Tags").First(&blog, id).Error; err != nil {
 		return nil, err
 	}
 	return &blog, nil
+}
 
 func (r *BlogRepository) FetchAll(ctx context.Context) ([]*domain.Blog, error) {
 	var blogs []*domain.Blog
@@ -58,4 +58,28 @@ func (r *BlogRepository) FetchAll(ctx context.Context) ([]*domain.Blog, error) {
 		return nil, err
 	}
 	return blogs, nil
+}
+
+func Paginate(page, limit int) func(db *gorm.DB) *gorm.DB {
+	return func(fb *gorm.DB) *gorm.DB {
+		offset := (page - 1) * limit
+		return fb.Offset(offset).Limit(limit)
+	}
+}
+func (r *BlogRepository) FetchPaginatedBlogs(ctx context.Context, page, limit int) ([]*domain.Blog, int64, error) {
+	var blogs []*domain.Blog
+	var total int64
+
+	if err := r.db.WithContext(ctx).Model(&domain.Blog{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.WithContext(ctx).
+		Preload("User").
+		Preload("Tags").
+		Scopes(Paginate(page, limit)).
+		Find(&blogs).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	return blogs, total, nil
 }
