@@ -30,7 +30,7 @@ func NewUserUsecase(ur domain.IUserRepository, es domain.IEmailInfrastructure, p
 }
 
 func (uu *UserUsecase) Register(user *domain.User) (domain.User, error) {
-	if user.Username == "" || user.Email == "" || user.Password == "" {
+	if user.Username == "" || user.Email == "" || user.Password == "" || user.Role == "" {
 		return domain.User{}, errors.New("missing required fields")
 	}
 
