@@ -231,8 +231,8 @@ func (s *UserRepositoryTestSuite) TestUpdateUserProfile_Success() {
 		"Bio":      "updated bio",
 	}
 	s.mock.ExpectBegin()
-	s.mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET "username"=$1,"bio"=$2 WHERE id = $3 AND "users"."deleted_at" IS NULL`)).
-		WithArgs("updateduser", "updated bio", userID).
+	s.mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET "bio"=$1,"username"=$2,"updated_at"=$3 WHERE id = $4 AND "users"."deleted_at" IS NULL`)).
+		WithArgs("updated bio", "updateduser", sqlmock.AnyArg(), userID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	s.mock.ExpectCommit()
 

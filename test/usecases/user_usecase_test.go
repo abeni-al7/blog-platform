@@ -604,6 +604,51 @@ func (suite *UserUsecaseTestSuite) TestForgotPassword_SendEmailError() {
 	suite.Equal("could not send reset link", err.Error())
 }
 
+func (suite *UserUsecaseTestSuite) TestLogout_Success() {
+	authHeader := "Bearer token123"
+	claims := &domain.TokenClaims{UserID: "1", UserRole: "user"}
+	suite.jwtService.On("ValidateAccessToken", authHeader).Return(claims, nil)
+	suite.tokenRepo.On("Delete", "token123").Return(nil)
+	err := suite.userUsecase.Logout(authHeader)
+	suite.NoError(err)
+	suite.tokenRepo.AssertCalled(suite.T(), "Delete", "token123")
+}
+
+func (suite *UserUsecaseTestSuite) TestLogout_MissingHeader() {
+	err := suite.userUsecase.Logout("")
+	suite.Error(err)
+	suite.Equal("authorization header required", err.Error())
+}
+
+func (suite *UserUsecaseTestSuite) TestLogout_InvalidToken() {
+	authHeader := "Bearer badtoken"
+	suite.jwtService.On("ValidateAccessToken", authHeader).Return((*domain.TokenClaims)(nil), errors.New("invalid"))
+	err := suite.userUsecase.Logout(authHeader)
+	suite.Error(err)
+	suite.Equal("invalid token", err.Error())
+	suite.tokenRepo.AssertNotCalled(suite.T(), "Delete", mock.Anything)
+}
+
+func (suite *UserUsecaseTestSuite) TestLogout_InvalidAuthorizationHeader() {
+	authHeader := "BearerOnlyNoToken"
+	claims := &domain.TokenClaims{UserID: "1", UserRole: "user"}
+	suite.jwtService.On("ValidateAccessToken", authHeader).Return(claims, nil)
+	err := suite.userUsecase.Logout(authHeader)
+	suite.Error(err)
+	suite.Equal("invalid authorization header", err.Error())
+	suite.tokenRepo.AssertNotCalled(suite.T(), "Delete", mock.Anything)
+}
+
+func (suite *UserUsecaseTestSuite) TestLogout_DeleteError() {
+	authHeader := "Bearer tokenToDelete"
+	claims := &domain.TokenClaims{UserID: "1", UserRole: "user"}
+	suite.jwtService.On("ValidateAccessToken", authHeader).Return(claims, nil)
+	suite.tokenRepo.On("Delete", "tokenToDelete").Return(errors.New("db err"))
+	err := suite.userUsecase.Logout(authHeader)
+	suite.Error(err)
+	suite.Equal("could not revoke token", err.Error())
+}
+
 func TestUserUsecase(t *testing.T) {
 	suite.Run(t, new(UserUsecaseTestSuite))
 }

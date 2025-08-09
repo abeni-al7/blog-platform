@@ -218,3 +218,12 @@ func (uc *UserController) UpdatePasswordDirect(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "password updated"})
 }
+
+func (uc *UserController) Logout(ctx *gin.Context) {
+	authHeader := ctx.GetHeader("Authorization")
+	if err := uc.userUsecase.Logout(authHeader); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"message": "logged out"})
+}
