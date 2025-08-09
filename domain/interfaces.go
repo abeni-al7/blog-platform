@@ -10,12 +10,16 @@ type IBlogRepository interface {
 	LinkTagToBlog(ctx context.Context, blogID int64, tagID int64) error
 	FetchByID(ctx context.Context, id int64) (*Blog, error)
 	FetchAll(ctx context.Context) ([]*Blog, error)
+
+	FetchPaginatedBlogs(ctx context.Context, page int, limit int) ([]*Blog, int64, error)
+
 }
 
 type IBlogUsecase interface {
 	CreateBlog(ctx context.Context, blog *Blog, tags []string) error
 	FetchBlogByID(ctx context.Context, id int64) (*Blog, error)
 	FetchAllBlogs(ctx context.Context) ([]*Blog, error)
+	FetchPaginatedBlogs(ctx context.Context, page int, limit int) ([]*Blog, int64, error)
 }
 
 type IJWTInfrastructure interface {
@@ -45,6 +49,8 @@ type IUserUsecase interface {
 	ActivateAccount(id string) error
 	Login(identifier string, password string) (string, string, error)
 	GetUserProfile(userID int64) (*User, error)
+	Promote(id string) error
+	Demote(id string) error
 	UpdateUserProfile(userID int64, updates map[string]interface{}) error
 	RefreshToken(authHeader string) (string, string, error)
 	ResetPassword(userID string, oldPassword string, newPassword string) error
@@ -60,6 +66,8 @@ type IUserRepository interface {
 	ActivateAccount(idStr string) error
 	Fetch(idStr string) (User, error)
 	GetUserProfile(userID int64) (*User, error)
+	Promote(idStr string) error
+	Demote(idStr string) error
 	UpdateUserProfile(userID int64, updates map[string]interface{}) error
 	ResetPassword(idStr string, newPassword string) error
 }
@@ -68,10 +76,12 @@ type IUserController interface {
 	Register(ctx *context.Context)
 	ActivateAccount(ctx *context.Context)
 	Login(ctx *context.Context)
+
 	GetProfile(ctx *context.Context)
 	UpdateProfile(ctx *context.Context)
 	RefreshToken(ctx *context.Context)
 	ResetPassword(ctx *context.Context)
+
 	ForgotPassword(ctx *context.Context)
 	UpdatePasswordDirect(ctx *context.Context)
 	Logout(ctx *context.Context)

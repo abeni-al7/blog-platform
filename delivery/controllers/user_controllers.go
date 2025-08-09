@@ -116,6 +116,28 @@ func (uc *UserController) GetProfile(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, user)
 }
 
+func (uc *UserController) Promote(ctx *gin.Context) {
+	id := ctx.Param("id")
+	err := uc.userUsecase.Promote(id)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "user promoted to admin"})
+}
+
+func (uc *UserController) Demote(ctx *gin.Context) {
+	id := ctx.Param("id")
+	err := uc.userUsecase.Demote(id)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "user demoted to user"})
+}
+  
 func (uc *UserController) UpdateProfile(ctx *gin.Context) {
 	idParam := ctx.Param("id")
 	userID, err := strconv.ParseInt(idParam, 10, 64)
@@ -135,6 +157,7 @@ func (uc *UserController) UpdateProfile(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "profile updated successfully"})
 }
+
 func (uc *UserController) RefreshToken(ctx *gin.Context) {
 	authHeader := ctx.GetHeader("Authorization")
 	access, refresh, err := uc.userUsecase.RefreshToken(authHeader)

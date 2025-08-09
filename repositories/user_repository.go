@@ -84,6 +84,34 @@ func (ur *UserRepository) GetUserProfile(userId int64) (*domain.User, error) {
 	return &user, nil
 }
 
+func (ur *UserRepository) Promote(idStr string) error {
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return errors.New("invalid id")
+	}
+
+	result := ur.DB.Model(&domain.User{}).Where("id = ?", id).Update("role", "admin")
+	if result.Error != nil || result.RowsAffected == 0 {
+		return errors.New("failed to promote user")
+	}
+
+	return nil
+}
+
+func (ur *UserRepository) Demote(idStr string) error {
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return errors.New("invalid id")
+	}
+
+	result := ur.DB.Model(&domain.User{}).Where("id = ?", id).Update("role", "user")
+	if result.Error != nil || result.RowsAffected == 0 {
+		return errors.New("failed to demote user")
+	}
+
+	return nil
+}
+
 func (ur *UserRepository) UpdateUserProfile(userID int64, updates map[string]interface{}) error {
 	allowedFields := map[string]bool{
 		"Username":       true,
@@ -104,6 +132,7 @@ func (ur *UserRepository) UpdateUserProfile(userID int64, updates map[string]int
 	}
 	return ur.DB.Model(&domain.User{}).Where("id = ?", userID).Updates(filteredUpdates).Error
 }
+
 func (ur *UserRepository) ResetPassword(idStr string, newPassword string) error {
 	id, err := strconv.Atoi(idStr)
 	if err != nil {

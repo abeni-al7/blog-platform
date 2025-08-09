@@ -233,6 +233,23 @@ func (uu UserUsecase) GetUserProfile(userID int64) (*domain.User, error) {
 	return user, nil
 }
 
+func (uu *UserUsecase) Promote(id string) error {
+	_, err := uu.userRepo.Fetch(id)
+	if err != nil {
+		return errors.New("user not found")
+	}
+	return uu.userRepo.Promote(id)
+}
+
+func (uu *UserUsecase) Demote(id string) error {
+	_, err := uu.userRepo.Fetch(id)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	return uu.userRepo.Demote(id)
+}
+
 func (uu UserUsecase) UpdateUserProfile(userID int64, updates map[string]interface{}) error {
 	return uu.userRepo.UpdateUserProfile(userID, updates)
 }

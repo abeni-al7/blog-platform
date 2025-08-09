@@ -284,6 +284,34 @@ func (suite *UserUsecaseTestSuite) TestLogin_SaveRefreshTokenError() {
 	suite.Error(err)
 }
 
+func (suite *UserUsecaseTestSuite) TestPromote_Success() {
+	suite.userRepo.On("Fetch", "1").Return(domain.User{}, nil)
+	suite.userRepo.On("Promote", "1").Return(nil)
+	err := suite.userUsecase.Promote("1")
+	suite.NoError(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestPromote_UserNotFound() {
+	suite.userRepo.On("Fetch", "1").Return(domain.User{}, errors.New("not found"))
+	err := suite.userUsecase.Promote("1")
+	suite.Error(err)
+	suite.Equal("user not found", err.Error())
+}
+
+func (suite *UserUsecaseTestSuite) TestDemote_Success() {
+	suite.userRepo.On("Fetch", "1").Return(domain.User{}, nil)
+	suite.userRepo.On("Demote", "1").Return(nil)
+	err := suite.userUsecase.Demote("1")
+	suite.NoError(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestDemote_UserNotFound() {
+	suite.userRepo.On("Fetch", "1").Return(domain.User{}, errors.New("not found"))
+	err := suite.userUsecase.Demote("1")
+	suite.Error(err)
+	suite.Equal("user not found", err.Error())
+}
+
 func (suite *UserUsecaseTestSuite) TestGetUserProfile_Success() {
 	expectedUser := &domain.User{ID: 1, Username: "testuser", Email: "test@example.com"}
 	suite.userRepo.On("GetUserProfile", int64(1)).Return(expectedUser, nil)
