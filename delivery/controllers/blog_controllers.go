@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"net/http"
-	"strings"
+	"strconv"
 
 	"github.com/blog-platform/domain"
 	"github.com/gin-gonic/gin"
@@ -13,40 +13,51 @@ type BlogController struct {
 }
 
 func NewBlogController(blogUsecase domain.IBlogUsecase) *BlogController {
-	return &BlogController{blogUsecase}
+	return &BlogController{blogUsecase: blogUsecase}
 }
 
-type CreateBlogRequest struct {
-	Title   string `json:"title" binding:"required"`
-	Content string `json:"content" binding:"required"`
-	Tags    string `json:"tags" binding:"required"`
-}
+func (h *BlogController) CreateBlog(c *gin.Context) {
+	var blog domain.Blog
+	if err := c.ShouldBindJSON(&blog); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+	// Extract logged-in user ID (assuming middleware sets it)
+	userIDVal, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userID := userIDVal.(int64)
 
-func (c *BlogController) CreateBlog(ctx *gin.Context) {
-	var req CreateBlogRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	tags := c.QueryArray("tags")
+
+	if err := h.blogUsecase.CreateBlog(c.Request.Context(), &blog, tags, userID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	blog := domain.Blog{
-		Title:   req.Title,
-		Content: req.Content,
-	}
+	c.JSON(http.StatusCreated, gin.H{"message": "blog created", "blog": blog})
+}
 
-	// Split tags by comma and trim spaces
-	var tags []string
-	for _, tag := range strings.Split(req.Tags, ",") {
-		t := strings.TrimSpace(tag)
-		if t != "" {
-			tags = append(tags, t)
-		}
-	}
-
-	err := c.blogUsecase.CreateBlog(ctx.Request.Context(), &blog, tags)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create blog"})
+func (h *BlogController) DeleteBlog(c *gin.Context) {
+	blogID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || blogID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid blog ID"})
 		return
 	}
-	ctx.JSON(http.StatusCreated, gin.H{"message": "Blog created successfully", "blog": blog})
+
+	userIDVal, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userID := userIDVal.(int64)
+
+	if err := h.blogUsecase.DeleteBlog(c.Request.Context(), blogID, userID); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "blog deleted"})
 }

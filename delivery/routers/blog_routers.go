@@ -7,4 +7,5 @@ import (
 
 func RegisterBlogRoutes(router *gin.Engine, blogController *controllers.BlogController) {
 	router.POST("/blogs", blogController.CreateBlog)
+	router.DELETE("/blogs/:id", blogController.DeleteBlog)
 }

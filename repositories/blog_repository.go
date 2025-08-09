@@ -42,3 +42,11 @@ func (r *BlogRepository) LinkTagToBlog(ctx context.Context, blogID int64, tagID 
 	}
 	return r.db.WithContext(ctx).Create(&tagBlog).Error
 }
+
+func (r *BlogRepository) DeleteBlog(ctx context.Context, ID int64) error {
+	result := r.db.WithContext(ctx).Delete(&domain.Blog{}, ID)
+	if result.RowsAffected == 0 {
+		return errors.New("blog not found")
+	}
+	return result.Error
+}
