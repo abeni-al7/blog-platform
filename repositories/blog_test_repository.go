@@ -47,13 +47,23 @@ func (suite *BlogRepoTestSuite) TestCreateBlog() {
 	}
 	suite.mock.ExpectBegin()
 	suite.mock.ExpectExec(`INSERT INTO "blogs"`).
-		WithArgs(blog.Title, blog.Content, blog.ID).
+		WithArgs(blog.Title, blog.Content, blog.ID, blog.UserID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	suite.mock.ExpectCommit()
 
 	err := suite.repo.Create(context.Background(), blog)
 	assert.NoError(suite.T(), err)
 	assert.NoError(suite.T(), suite.mock.ExpectationsWereMet())
+}
+func (suite *BlogRepoTestSuite) TestDeleteByID() {
+	suite.mock.ExpectBegin()
+	suite.mock.ExpectExec(`UPDATE "blogs" SET "deleted_at"=`).
+		WithArgs(sqlmock.AnyArg(), 1, "user123").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	suite.mock.ExpectCommit()
+
+	err := suite.repo.DeleteByID(context.Background(), 1, "user123")
+	assert.NoError(suite.T(), err)
 }
 
 func TestBlogRepoTestSuite(t *testing.T) {

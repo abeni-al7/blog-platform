@@ -20,8 +20,12 @@ func NewBlogUsecase(repo domain.IBlogRepository) domain.IBlogUsecase {
 
 func (uc blogUsecase) CreateBlog(ctx context.Context, blog *domain.Blog, tags []string) error {
 	// prevent empty strings from being added
+
 	if blog.Title == "" || blog.Content == "" {
 		return errors.New("title and content cannot be empty")
+	}
+	if blog.UserID == 0 {
+		return errors.New("userID cannot be zero")
 	}
 
 	err := uc.blogRepo.Create(ctx, blog)
@@ -29,7 +33,6 @@ func (uc blogUsecase) CreateBlog(ctx context.Context, blog *domain.Blog, tags []
 	if err != nil {
 		return errors.New("failed to create blog")
 	}
-	// Ensure blog ID is populated after creation
 	if blog.ID == 0 {
 		return errors.New("blog ID not set after creation")
 	}
@@ -72,4 +75,8 @@ func (uc *blogUsecase) FetchAllBlogs(ctx context.Context) ([]*domain.Blog, error
 		return nil, fmt.Errorf("failed to fetch blogs: %w", err)
 	}
 	return blogs, nil
+}
+
+func (u *blogUsecase) DeleteBlog(ctx context.Context, ID int64, userID string) error {
+	return u.blogRepo.DeleteByID(ctx, ID, userID)
 }

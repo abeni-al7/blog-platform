@@ -11,4 +11,5 @@ func RegisterBlogRoutes(router *gin.Engine, blogController *controllers.BlogCont
 	router.GET("/blogs/:id", blogController.GetBlogByID)
 
 	router.GET("/blogs", blogController.GetBlogs)
+	router.DELETE("/blogs/:id", blogController.DeleteBlog)
 }

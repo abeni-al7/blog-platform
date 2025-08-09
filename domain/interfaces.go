@@ -10,12 +10,14 @@ type IBlogRepository interface {
 	LinkTagToBlog(ctx context.Context, blogID int64, tagID int64) error
 	FetchByID(ctx context.Context, id int64) (*Blog, error)
 	FetchAll(ctx context.Context) ([]*Blog, error)
+	DeleteByID(ctx context.Context, ID int64, userID string) error
 }
 
 type IBlogUsecase interface {
 	CreateBlog(ctx context.Context, blog *Blog, tags []string) error
 	FetchBlogByID(ctx context.Context, id int64) (*Blog, error)
 	FetchAllBlogs(ctx context.Context) ([]*Blog, error)
+	DeleteBlog(ctx context.Context, ID int64, userID string) error
 }
 
 type IJWTInfrastructure interface {
