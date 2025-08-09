@@ -25,6 +25,14 @@ type ResetPasswordDTO struct {
 	NewPassword string `json:"new_password"`
 }
 
+type ForgotPasswordDTO struct {
+	Email string `json:"email"`
+}
+
+type UpdatePasswordDirectDTO struct {
+	NewPassword string `json:"new_password"`
+}
+
 type UserController struct {
 	userUsecase domain.IUserUsecase
 }
@@ -152,6 +160,38 @@ func (uc *UserController) ResetPassword(ctx *gin.Context) {
 	}
 	userID, _ := userIDVal.(string)
 	if err := uc.userUsecase.ResetPassword(userID, body.OldPassword, body.NewPassword); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"message": "password updated"})
+}
+
+func (uc *UserController) ForgotPassword(ctx *gin.Context) {
+	var body ForgotPasswordDTO
+	if err := ctx.ShouldBindJSON(&body); err != nil || body.Email == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+	if err := uc.userUsecase.ForgotPassword(body.Email); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"message": "reset link sent (check email)"})
+}
+
+func (uc *UserController) UpdatePasswordDirect(ctx *gin.Context) {
+	userID := ctx.Param("id")
+	var body UpdatePasswordDirectDTO
+	if err := ctx.ShouldBindJSON(&body); err != nil || body.NewPassword == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+	token := ctx.Query("token")
+	if token == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "token required"})
+		return
+	}
+	if err := uc.userUsecase.UpdatePasswordDirect(userID, body.NewPassword, token); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

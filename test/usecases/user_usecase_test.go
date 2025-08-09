@@ -3,6 +3,7 @@ package test
 import (
 	"errors"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/blog-platform/domain"
@@ -458,6 +459,121 @@ func (suite *UserUsecaseTestSuite) TestResetPassword_UpdateError() {
 	suite.userRepo.On("ResetPassword", "1", "new_hashed").Return(errors.New("db error"))
 	err := suite.userUsecase.ResetPassword("1", "OldPass123!", "NewPass123!")
 	suite.Error(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestUpdatePasswordDirect_Success() {
+	claims := &domain.TokenClaims{UserID: "1", UserRole: "user"}
+	suite.jwtService.On("ValidateAccessToken", "Bearer token123").Return(claims, nil)
+	suite.pwdService.On("HashPassword", "NewPass123!").Return("new_hashed", nil)
+	suite.userRepo.On("ResetPassword", "1", "new_hashed").Return(nil)
+	err := suite.userUsecase.UpdatePasswordDirect("1", "NewPass123!", "token123")
+	suite.NoError(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestUpdatePasswordDirect_MissingToken() {
+	err := suite.userUsecase.UpdatePasswordDirect("1", "NewPass123!", "")
+	suite.Error(err)
+	suite.Equal("token required", err.Error())
+}
+
+func (suite *UserUsecaseTestSuite) TestUpdatePasswordDirect_InvalidToken() {
+	suite.jwtService.On("ValidateAccessToken", "Bearer badtoken").Return((*domain.TokenClaims)(nil), errors.New("invalid token"))
+	err := suite.userUsecase.UpdatePasswordDirect("1", "NewPass123!", "badtoken")
+	suite.Error(err)
+	suite.Equal("invalid or expired token", err.Error())
+}
+
+func (suite *UserUsecaseTestSuite) TestUpdatePasswordDirect_TokenUserMismatch() {
+	claims := &domain.TokenClaims{UserID: "2", UserRole: "user"}
+	suite.jwtService.On("ValidateAccessToken", "Bearer tokenMismatch").Return(claims, nil)
+	err := suite.userUsecase.UpdatePasswordDirect("1", "NewPass123!", "tokenMismatch")
+	suite.Error(err)
+	suite.Equal("token does not match user", err.Error())
+}
+
+func (suite *UserUsecaseTestSuite) TestUpdatePasswordDirect_InvalidPasswordFormat() {
+	claims := &domain.TokenClaims{UserID: "1", UserRole: "user"}
+	suite.jwtService.On("ValidateAccessToken", "Bearer tokenFormat").Return(claims, nil)
+	err := suite.userUsecase.UpdatePasswordDirect("1", "weak", "tokenFormat")
+	suite.Error(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestUpdatePasswordDirect_HashError() {
+	claims := &domain.TokenClaims{UserID: "1", UserRole: "user"}
+	suite.jwtService.On("ValidateAccessToken", "Bearer tokenHash").Return(claims, nil)
+	suite.pwdService.On("HashPassword", "NewPass123!").Return("", errors.New("hash fail"))
+	err := suite.userUsecase.UpdatePasswordDirect("1", "NewPass123!", "tokenHash")
+	suite.Error(err)
+	suite.Equal("could not hash password", err.Error())
+}
+
+func (suite *UserUsecaseTestSuite) TestUpdatePasswordDirect_UpdateError() {
+	claims := &domain.TokenClaims{UserID: "1", UserRole: "user"}
+	suite.jwtService.On("ValidateAccessToken", "Bearer tokenUpdate").Return(claims, nil)
+	suite.pwdService.On("HashPassword", "NewPass123!").Return("new_hashed", nil)
+	suite.userRepo.On("ResetPassword", "1", "new_hashed").Return(errors.New("db error"))
+	err := suite.userUsecase.UpdatePasswordDirect("1", "NewPass123!", "tokenUpdate")
+	suite.Error(err)
+	suite.Equal("could not update password", err.Error())
+}
+
+func (suite *UserUsecaseTestSuite) TestForgotPassword_Success() {
+	user := domain.User{ID: 1, Email: "user@example.com", Role: "user"}
+	suite.userRepo.On("FetchByEmail", user.Email).Return(user, nil)
+	suite.jwtService.On("GenerateAccessToken", "1", "user").Return("reset_token", nil)
+	suite.tokenRepo.On("Save", mock.AnythingOfType("*domain.Token")).Return(nil)
+	suite.emailService.On("SendEmail", []string{user.Email}, "Reset Password", mock.MatchedBy(func(body string) bool {
+		return strings.Contains(body, "/password/1/update?token=reset_token")
+	})).Return(nil)
+
+	err := suite.userUsecase.ForgotPassword(user.Email)
+	suite.NoError(err)
+}
+
+func (suite *UserUsecaseTestSuite) TestForgotPassword_EmptyEmail() {
+	err := suite.userUsecase.ForgotPassword("")
+	suite.Error(err)
+	suite.Equal("email required", err.Error())
+}
+
+func (suite *UserUsecaseTestSuite) TestForgotPassword_UserNotFound() {
+	suite.userRepo.On("FetchByEmail", "missing@example.com").Return(domain.User{}, errors.New("not found"))
+	err := suite.userUsecase.ForgotPassword("missing@example.com")
+	suite.Error(err)
+	suite.Equal("user not found", err.Error())
+}
+
+func (suite *UserUsecaseTestSuite) TestForgotPassword_GenerateTokenError() {
+	user := domain.User{ID: 1, Email: "user@example.com", Role: "user"}
+	suite.userRepo.On("FetchByEmail", user.Email).Return(user, nil)
+	suite.jwtService.On("GenerateAccessToken", "1", "user").Return("", errors.New("gen err"))
+	err := suite.userUsecase.ForgotPassword(user.Email)
+	suite.Error(err)
+	suite.Equal("could not generate reset token", err.Error())
+	suite.tokenRepo.AssertNotCalled(suite.T(), "Save", mock.Anything)
+	suite.emailService.AssertNotCalled(suite.T(), "SendEmail", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func (suite *UserUsecaseTestSuite) TestForgotPassword_PersistTokenError() {
+	user := domain.User{ID: 1, Email: "user@example.com", Role: "user"}
+	suite.userRepo.On("FetchByEmail", user.Email).Return(user, nil)
+	suite.jwtService.On("GenerateAccessToken", "1", "user").Return("reset_token", nil)
+	suite.tokenRepo.On("Save", mock.AnythingOfType("*domain.Token")).Return(errors.New("db err"))
+	err := suite.userUsecase.ForgotPassword(user.Email)
+	suite.Error(err)
+	suite.Equal("could not persist reset token", err.Error())
+	suite.emailService.AssertNotCalled(suite.T(), "SendEmail", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func (suite *UserUsecaseTestSuite) TestForgotPassword_SendEmailError() {
+	user := domain.User{ID: 1, Email: "user@example.com", Role: "user"}
+	suite.userRepo.On("FetchByEmail", user.Email).Return(user, nil)
+	suite.jwtService.On("GenerateAccessToken", "1", "user").Return("reset_token", nil)
+	suite.tokenRepo.On("Save", mock.AnythingOfType("*domain.Token")).Return(nil)
+	suite.emailService.On("SendEmail", []string{user.Email}, "Reset Password", mock.AnythingOfType("string")).Return(errors.New("smtp err"))
+	err := suite.userUsecase.ForgotPassword(user.Email)
+	suite.Error(err)
+	suite.Equal("could not send reset link", err.Error())
 }
 
 func TestUserUsecase(t *testing.T) {
