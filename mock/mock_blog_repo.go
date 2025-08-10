@@ -43,3 +43,23 @@ func (m *MockBlogRepo) FetchPaginatedBlogs(ctx context.Context, page, limit int)
 	args := m.Called(ctx, page, limit)
 	return args.Get(0).([]*domain.Blog), args.Get(1).(int64), args.Error(2)
 }
+
+func (m *MockBlogRepo) IncrementView(ctx context.Context, blogID int64) error {
+	args := m.Called(ctx, blogID)
+	return args.Error(0)
+}
+
+func (m *MockBlogRepo) AddLike(ctx context.Context, blogID int64, userID int64) error {
+	args := m.Called(ctx, blogID, userID)
+	return args.Error(0)
+}
+
+func (m *MockBlogRepo) RemoveLike(ctx context.Context, blogID int64, userID int64) error {
+	args := m.Called(ctx, blogID, userID)
+	return args.Error(0)
+}
+
+func (m *MockBlogRepo) GetPopularity(ctx context.Context, blogID int64) (int, int, error) {
+	args := m.Called(ctx, blogID)
+	return args.Int(0), args.Int(1), args.Error(2)
+}
