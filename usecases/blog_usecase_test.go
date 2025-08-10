@@ -10,15 +10,26 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+type MockAIService struct{}
+
+func (m *MockAIService) GenerateBlogIdeas(topic string) (string, error) {
+	return "Mocked blog ideas", nil
+}
+func (m *MockAIService) SuggestBlogImprovements(content string) (string, error) {
+	return "Mocked improvement", nil
+}
+
 type BlogUsecaseTestSuite struct {
 	suite.Suite
 	mockRepo *mock.MockBlogRepo
+	mockAI   *MockAIService
 	usecase  domain.IBlogUsecase
 }
 
 func (suite *BlogUsecaseTestSuite) SetupTest() {
 	suite.mockRepo = new(mock.MockBlogRepo)
-	suite.usecase = NewBlogUsecase(suite.mockRepo)
+	suite.mockAI = &MockAIService{}
+	suite.usecase = NewBlogUsecase(suite.mockRepo, suite.mockAI)
 }
 
 func (suite *BlogUsecaseTestSuite) TestCreateBlog_Success() {

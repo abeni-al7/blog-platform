@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"unicode"
+	"strings"
 
 	"github.com/blog-platform/domain"
 )
@@ -159,6 +160,26 @@ func (uu *UserUsecase) RefreshToken(authHeader string) (string, string, error) {
 	}
 
 	return accessToken, refreshToken, nil
+}
+
+func (uu *UserUsecase) Logout(authHeader string) error {
+	if authHeader == "" {
+		return errors.New("authorization header required")
+	}
+
+	_, err := uu.jwtService.ValidateAccessToken(authHeader)
+	if err != nil {
+		return errors.New("invalid token")
+	}
+
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 {
+		return errors.New("invalid authorization header")
+	}
+	if err := uu.tokenRepo.Delete(parts[1]); err != nil {
+		return errors.New("could not revoke token")
+	}
+	return nil
 }
 
 func (uu *UserUsecase) validatePassword(password string) bool {

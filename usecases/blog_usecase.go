@@ -9,12 +9,14 @@ import (
 )
 
 type blogUsecase struct {
-	blogRepo domain.IBlogRepository
+	blogRepo  domain.IBlogRepository
+	aiService domain.IAIService
 }
 
-func NewBlogUsecase(repo domain.IBlogRepository) domain.IBlogUsecase {
+func NewBlogUsecase(repo domain.IBlogRepository, aiService domain.IAIService) domain.IBlogUsecase {
 	return &blogUsecase{
-		blogRepo: repo,
+		blogRepo:  repo,
+		aiService: aiService,
 	}
 }
 
@@ -77,6 +79,21 @@ func (uc *blogUsecase) FetchAllBlogs(ctx context.Context) ([]*domain.Blog, error
 	return blogs, nil
 }
 
+
 func (u *blogUsecase) DeleteBlog(ctx context.Context, ID int64, userID string) error {
 	return u.blogRepo.DeleteByID(ctx, ID, userID)
+
+func (uc *blogUsecase) GenerateBlogIdeas(topic string) (string, error) {
+	return uc.aiService.GenerateBlogIdeas(topic)
+}
+
+func (uc *blogUsecase) SuggestBlogImprovements(content string) (string, error) {
+	return uc.aiService.SuggestBlogImprovements(content)
+}
+func (uc *blogUsecase) GetAIService() domain.IAIService {
+	return uc.aiService
+}
+func (uc *blogUsecase) FetchPaginatedBlogs(ctx context.Context, page, limit int) ([]*domain.Blog, int64, error) {
+	return uc.blogRepo.FetchPaginatedBlogs(ctx, page, limit)
+
 }

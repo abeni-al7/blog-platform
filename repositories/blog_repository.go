@@ -49,6 +49,7 @@ func (r *BlogRepository) FetchByID(ctx context.Context, id int64) (*domain.Blog,
 	}
 	return &blog, nil
 }
+
 func (r *BlogRepository) FetchAll(ctx context.Context) ([]*domain.Blog, error) {
 	var blogs []*domain.Blog
 	if err := r.db.WithContext(ctx).Preload("User").Preload("Tags").
@@ -69,4 +70,28 @@ func (r *BlogRepository) DeleteByID(ctx context.Context, ID int64, userID string
 		return errors.New("blog not found")
 	}
 	return result.Error
+
+func Paginate(page, limit int) func(db *gorm.DB) *gorm.DB {
+	return func(fb *gorm.DB) *gorm.DB {
+		offset := (page - 1) * limit
+		return fb.Offset(offset).Limit(limit)
+	}
+}
+func (r *BlogRepository) FetchPaginatedBlogs(ctx context.Context, page, limit int) ([]*domain.Blog, int64, error) {
+	var blogs []*domain.Blog
+	var total int64
+
+	if err := r.db.WithContext(ctx).Model(&domain.Blog{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.WithContext(ctx).
+		Preload("User").
+		Preload("Tags").
+		Scopes(Paginate(page, limit)).
+		Find(&blogs).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	return blogs, total, nil
+
 }

@@ -32,3 +32,8 @@ func (repo *TokenRepository) Save(token *domain.Token) error {
 	}
 	return nil
 }
+
+func (repo *TokenRepository) Delete(content string) error {
+	result := repo.DB.Where("content = ?", content).Delete(&domain.Token{})
+	return result.Error
+}

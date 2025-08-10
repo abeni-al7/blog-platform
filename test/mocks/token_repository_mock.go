@@ -18,3 +18,8 @@ func (m *MockTokenRepository) Save(token *domain.Token) error {
 	args := m.Called(token)
 	return args.Error(0)
 }
+
+func (m *MockTokenRepository) Delete(content string) error {
+	args := m.Called(content)
+	return args.Error(0)
+}
