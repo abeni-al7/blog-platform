@@ -55,6 +55,19 @@ func (uc blogUsecase) CreateBlog(ctx context.Context, blog *domain.Blog, tags []
 	return nil
 }
 
+func (uc blogUsecase) FetchBlogByID(ctx context.Context, id int64) (*domain.Blog, error) {
+	if id <= 0 {
+		return nil, errors.New("invalid blog ID")
+	}
+
+	blog, err := uc.blogRepo.FetchByID(ctx, id)
+	if err != nil {
+		return nil, errors.New("failed to fetch blog")
+	}
+
+	return blog, nil
+}
+
 func (uc *blogUsecase) FetchAllBlogs(ctx context.Context) ([]*domain.Blog, error) {
 	blogs, err := uc.blogRepo.FetchAll(ctx)
 	if err != nil {
@@ -70,8 +83,9 @@ func (uc *blogUsecase) GenerateBlogIdeas(topic string) (string, error) {
 func (uc *blogUsecase) SuggestBlogImprovements(content string) (string, error) {
 	return uc.aiService.SuggestBlogImprovements(content)
 }
-
-// Optionally, expose the AI service for controller access:
 func (uc *blogUsecase) GetAIService() domain.IAIService {
 	return uc.aiService
+}
+func (uc *blogUsecase) FetchPaginatedBlogs(ctx context.Context, page, limit int) ([]*domain.Blog, int64, error) {
+	return uc.blogRepo.FetchPaginatedBlogs(ctx, page, limit)
 }

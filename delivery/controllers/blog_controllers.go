@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/blog-platform/domain"
@@ -12,8 +13,8 @@ type BlogController struct {
 	blogUsecase domain.IBlogUsecase
 }
 
-func NewBlogController(blogUsecase domain.IBlogUsecase) *BlogController {
-	return &BlogController{blogUsecase}
+func NewBlogController(uc domain.IBlogUsecase) *BlogController {
+	return &BlogController{blogUsecase: uc}
 }
 
 type CreateBlogRequest struct {
@@ -51,6 +52,22 @@ func (c *BlogController) CreateBlog(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"message": "Blog created successfully", "blog": blog})
 }
 
+func (c *BlogController) GetBlogByID(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid blog ID"})
+		return
+	}
+
+	blog, err := c.blogUsecase.FetchBlogByID(ctx.Request.Context(), id)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Blog not found"})
+		return
+	}
+	ctx.JSON(http.StatusOK, blog)
+}
+
 func (c *BlogController) GetBlogs(ctx *gin.Context) {
 	blogs, err := c.blogUsecase.FetchAllBlogs(ctx.Request.Context())
 	if err != nil {
@@ -58,6 +75,29 @@ func (c *BlogController) GetBlogs(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"blogs": blogs})
+
+}
+
+func (h *BlogController) FetchPaginatedBlogs(ctx *gin.Context) {
+	pageStr := ctx.DefaultQuery("page", "1")
+	limitStr := ctx.DefaultQuery("limit", "10")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+
+	blogs, total, err := h.blogUsecase.FetchPaginatedBlogs(ctx, page, limit)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch paginated blogs"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"data": blogs, "total": total, "page": page, "limit": limit, "total_pages": (total + int64(limit) - 1) / int64(limit)})
 }
 
 type BlogIdeaRequest struct {
