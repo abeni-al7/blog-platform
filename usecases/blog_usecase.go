@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/blog-platform/domain"
 )
@@ -104,4 +105,17 @@ func (uc *blogUsecase) GetPopularity(ctx context.Context, blogID int64) (int, in
 		return 0, 0, errors.New("invalid blog ID")
 	}
 	return uc.blogRepo.GetPopularity(ctx, blogID)
+}
+
+func (uc *blogUsecase) SearchBlogs(ctx context.Context, query string, page, limit int) ([]*domain.Blog, int64, error) {
+	if strings.TrimSpace(query) == "" {
+		return nil, 0, errors.New("query is required")
+	}
+	if page < 1 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+	return uc.blogRepo.SearchBlogs(ctx, query, page, limit)
 }

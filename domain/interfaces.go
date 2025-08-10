@@ -14,7 +14,7 @@ type IBlogRepository interface {
 	AddLike(ctx context.Context, blogID int64, userID int64) error // userID optional, ignored
 	RemoveLike(ctx context.Context, blogID int64, userID int64) error
 	GetPopularity(ctx context.Context, blogID int64) (views int, likes int, err error)
-
+	SearchBlogs(ctx context.Context, query string, page, limit int) ([]*Blog, int64, error)
 	FetchPaginatedBlogs(ctx context.Context, page int, limit int) ([]*Blog, int64, error)
 }
 

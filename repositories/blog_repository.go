@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/blog-platform/domain"
 	"gorm.io/gorm"
@@ -118,4 +119,37 @@ func (r *BlogRepository) GetPopularity(ctx context.Context, blogID int64) (int, 
 		return 0, 0, err
 	}
 	return b.ViewCount, b.Likes, nil
+}
+
+func (r *BlogRepository) SearchBlogs(ctx context.Context, query string, page, limit int) ([]*domain.Blog, int64, error) {
+	var (
+		blogs []*domain.Blog
+		total int64
+	)
+
+	q := strings.TrimSpace(query)
+	if q == "" {
+		return []*domain.Blog{}, 0, nil
+	}
+	pattern := "%" + strings.ToLower(q) + "%"
+
+	db := r.db.WithContext(ctx).Model(&domain.Blog{}).
+		Where("LOWER(title) LIKE ? OR LOWER(content) LIKE ?", pattern, pattern)
+
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if page < 1 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
+
+	if err := db.Order("created_at DESC").Limit(limit).Offset(offset).Find(&blogs).Error; err != nil {
+		return nil, 0, err
+	}
+	return blogs, total, nil
 }
