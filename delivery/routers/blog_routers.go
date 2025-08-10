@@ -11,7 +11,7 @@ func RegisterBlogRoutes(router *gin.Engine, blogController *controllers.BlogCont
 	router.GET("/blogs/:id", blogController.GetBlogByID)
 
 	router.GET("/blogs", blogController.GetBlogs)
-
 	router.GET("/blogs/paginated", blogController.FetchPaginatedBlogs)
-
+  router.POST("/blogs/ideas", blogController.GenerateBlogIdeas)
+	router.POST("/blogs/improve", blogController.SuggestBlogImprovements)
 }
