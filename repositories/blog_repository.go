@@ -99,17 +99,28 @@ func (r *BlogRepository) AddLike(ctx context.Context, blogID int64, _ int64) err
 }
 
 func (r *BlogRepository) RemoveLike(ctx context.Context, blogID int64, _ int64) error {
-	// Portable clamp to zero
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var b domain.Blog
-		if err := tx.Select("id, likes").First(&b, blogID).Error; err != nil {
-			return err
-		}
-		if b.Likes > 0 {
-			b.Likes--
-		}
-		return tx.Model(&domain.Blog{}).Where("id = ?", blogID).Update("likes", b.Likes).Error
-	})
+	tx := r.db.WithContext(ctx).
+		Model(&domain.Blog{}).
+		Where("id = ? AND likes > 0", blogID).
+		UpdateColumn("likes", gorm.Expr("likes - 1"))
+	if tx.Error != nil {
+		return tx.Error
+	}
+	if tx.RowsAffected == 1 {
+		return nil
+	}
+
+	var count int64
+	if err := r.db.WithContext(ctx).
+		Model(&domain.Blog{}).
+		Where("id = ?", blogID).
+		Count(&count).Error; err != nil {
+		return err
+	}
+	if count == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return errors.New("not liked")
 }
 
 func (r *BlogRepository) GetPopularity(ctx context.Context, blogID int64) (int, int, error) {
