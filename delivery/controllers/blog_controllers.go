@@ -152,3 +152,38 @@ func (c *BlogController) GetPopularity(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{"view_count": views, "likes": likes})
 }
+
+func (h *BlogController) SearchBlogs(ctx *gin.Context) {
+	q := ctx.Query("q")
+	if strings.TrimSpace(q) == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "q is required"})
+		return
+	}
+	pageStr := ctx.DefaultQuery("page", "1")
+	limitStr := ctx.DefaultQuery("limit", "10")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid page"})
+		return
+	}
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid limit"})
+		return
+	}
+
+	blogs, total, err := h.blogUsecase.SearchBlogs(ctx.Request.Context(), q, page, limit)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to search blogs"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"blogs": blogs,
+		"meta": gin.H{
+			"total": total,
+			"page":  page,
+			"limit": limit,
+		},
+	})
+}
