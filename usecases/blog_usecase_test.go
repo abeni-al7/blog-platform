@@ -38,6 +38,7 @@ func (suite *BlogUsecaseTestSuite) TestCreateBlog_Success() {
 		ID:      1,
 		Title:   "Test Blog",
 		Content: "This is a test blog content.",
+		UserID:  123,
 	}
 
 	suite.mockRepo.On("Create", ctx, blog).Return(nil)
@@ -54,6 +55,7 @@ func (suite *BlogUsecaseTestSuite) TestCreateBlogError() {
 		ID:      2,
 		Title:   "Fail Blog",
 		Content: "This blog will fail.",
+		UserID:  456,
 	}
 
 	// Simulate repo error

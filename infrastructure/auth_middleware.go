@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/blog-platform/domain"
 	"github.com/gin-gonic/gin"
@@ -26,7 +27,7 @@ func (m *Middleware) AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		userID := claims.UserID
+		userID, _ := strconv.ParseInt(claims.UserID, 10, 64)
 		role := claims.UserRole
 
 		ctx.Set("user_id", userID)
