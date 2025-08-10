@@ -25,3 +25,20 @@ func (m *MockBlogRepo) LinkTagToBlog(ctx context.Context, blogID int64, tagID in
 	args := m.Called(ctx, blogID, tagID)
 	return args.Error(0)
 }
+
+func (m *MockBlogRepo) FetchByID(ctx context.Context, id int64) (*domain.Blog, error) {
+	args := m.Called(ctx, id)
+	if blog, ok := args.Get(0).(*domain.Blog); ok {
+		return blog, args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+func (m *MockBlogRepo) FetchAll(ctx context.Context) ([]*domain.Blog, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]*domain.Blog), args.Error(1)
+}
+
+func (m *MockBlogRepo) DeleteByID(ctx context.Context, ID int64, userID string) error {
+	args := m.Called(ctx, ID, userID)
+	return args.Error(0)
+}

@@ -24,3 +24,11 @@ func (repo *TokenRepository) FetchByContent(content string) (domain.Token, error
 
 	return token, nil
 }
+
+func (repo *TokenRepository) Save(token *domain.Token) error {
+	result := repo.DB.Create(token)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}

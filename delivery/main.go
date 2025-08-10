@@ -6,6 +6,7 @@ import (
 	"github.com/blog-platform/delivery/routers"
 	"github.com/blog-platform/infrastructure"
 	"github.com/blog-platform/repositories"
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
@@ -16,5 +17,6 @@ func main() {
 
 	repositories.ConnectDB()
 	infrastructure.ConnectClient()
-	routers.Init()
+	route := routers.Init(gin.Default())
+	route.Run()
 }

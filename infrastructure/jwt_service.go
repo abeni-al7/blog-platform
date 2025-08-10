@@ -15,18 +15,12 @@ type JWTInfrastructure struct {
 	TokenRepo domain.ITokenRepository
 }
 
-func NewJWTInfrastructure(accessSecret, refreshSecret []byte, tokenRepo domain.ITokenRepository) (*JWTInfrastructure, error) {
-	if len(accessSecret) == 0 || len(refreshSecret) == 0 {
-		return nil, errors.New("access and refresh secrets cannot be empty")
-	}
-	if tokenRepo == nil {
-        return nil, errors.New("token repository cannot be nil")
-    }
+func NewJWTInfrastructure(accessSecret, refreshSecret []byte, tokenRepo domain.ITokenRepository) *JWTInfrastructure {
 	return &JWTInfrastructure{
 		AccessSecret:  accessSecret,
 		RefreshSecret: refreshSecret,
 		TokenRepo: tokenRepo,
-	}, nil
+	}
 }
 
 func (infra *JWTInfrastructure) GenerateAccessToken(userID string, userRole string) (string, error) {

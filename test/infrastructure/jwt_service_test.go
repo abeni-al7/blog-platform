@@ -6,7 +6,7 @@ import (
 
 	"github.com/blog-platform/domain"
 	"github.com/blog-platform/infrastructure"
-	mocks "github.com/blog-platform/test/mocks/infrastructure"
+	"github.com/blog-platform/test/mocks"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/suite"
 )

@@ -3,9 +3,9 @@ package usecases
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/blog-platform/domain"
-	"gorm.io/gorm"
 )
 
 type blogUsecase struct {
@@ -18,9 +18,9 @@ func NewBlogUsecase(repo domain.IBlogRepository) domain.IBlogUsecase {
 	}
 }
 
-func (uc blogUsecase) CreateBlog(ctx context.Context, blog *domain.Blog, tags []string, userID int64) error {
+func (uc blogUsecase) CreateBlog(ctx context.Context, blog *domain.Blog, tags []string) error {
 	// prevent empty strings from being added
-	blog.UserID = userID
+
 	if blog.Title == "" || blog.Content == "" {
 		return errors.New("title and content cannot be empty")
 	}
@@ -33,46 +33,50 @@ func (uc blogUsecase) CreateBlog(ctx context.Context, blog *domain.Blog, tags []
 	if err != nil {
 		return errors.New("failed to create blog")
 	}
+	if blog.ID == 0 {
+		return errors.New("blog ID not set after creation")
+	}
 
 	for _, tag := range tags {
 		if tag == "" {
 			continue // skip empty tags
 		}
+
 		tagID, err := uc.blogRepo.FindOrCreateTag(ctx, tag)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to find or create tag '%s': %w", tag, err)
 		}
+
 		err = uc.blogRepo.LinkTagToBlog(ctx, int64(blog.ID), tagID)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to link tag '%s' to blog: %w", tag, err)
 		}
 	}
 
 	return nil
 }
 
-func (uc *blogUsecase) DeleteBlog(ctx context.Context, ID int64, userID int64) error {
-	blog, err := uc.blogRepo.FetchByID(ctx, ID)
-	// Validate userID
+func (uc blogUsecase) FetchBlogByID(ctx context.Context, id int64) (*domain.Blog, error) {
+	if id <= 0 {
+		return nil, errors.New("invalid blog ID")
+	}
+
+	blog, err := uc.blogRepo.FetchByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("blog not found")
-		}
-		return err
+		return nil, errors.New("failed to fetch blog")
 	}
 
-	if blog.UserID != userID {
-		return errors.New("unauthorized to delete this blog")
-	}
-	if userID == 0 {
-		return errors.New("userID cannot be zero")
-	}
+	return blog, nil
+}
 
-	// Call the repository method to delete the blog
-	err = uc.blogRepo.DeleteBlog(ctx, ID)
+func (uc *blogUsecase) FetchAllBlogs(ctx context.Context) ([]*domain.Blog, error) {
+	blogs, err := uc.blogRepo.FetchAll(ctx)
 	if err != nil {
-		return errors.New("failed to delete blog")
+		return nil, fmt.Errorf("failed to fetch blogs: %w", err)
 	}
+	return blogs, nil
+}
 
-	return uc.blogRepo.DeleteBlog(ctx, ID)
+func (u *blogUsecase) DeleteBlog(ctx context.Context, ID int64, userID string) error {
+	return u.blogRepo.DeleteByID(ctx, ID, userID)
 }
