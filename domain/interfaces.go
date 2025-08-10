@@ -10,9 +10,12 @@ type IBlogRepository interface {
 	LinkTagToBlog(ctx context.Context, blogID int64, tagID int64) error
 	FetchByID(ctx context.Context, id int64) (*Blog, error)
 	FetchAll(ctx context.Context) ([]*Blog, error)
+	IncrementView(ctx context.Context, blogID int64) error
+	AddLike(ctx context.Context, blogID int64, userID int64) error // userID optional, ignored
+	RemoveLike(ctx context.Context, blogID int64, userID int64) error
+	GetPopularity(ctx context.Context, blogID int64) (views int, likes int, err error)
 
 	FetchPaginatedBlogs(ctx context.Context, page int, limit int) ([]*Blog, int64, error)
-
 }
 
 type IBlogUsecase interface {
@@ -20,6 +23,10 @@ type IBlogUsecase interface {
 	FetchBlogByID(ctx context.Context, id int64) (*Blog, error)
 	FetchAllBlogs(ctx context.Context) ([]*Blog, error)
 	FetchPaginatedBlogs(ctx context.Context, page int, limit int) ([]*Blog, int64, error)
+	TrackView(ctx context.Context, blogID int64) error
+	LikeBlog(ctx context.Context, blogID, userID int64) error
+	UnlikeBlog(ctx context.Context, blogID, userID int64) error
+	GetPopularity(ctx context.Context, blogID int64) (views int, likes int, err error)
 }
 
 type IJWTInfrastructure interface {
