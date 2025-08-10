@@ -77,3 +77,31 @@ func (uc *blogUsecase) FetchAllBlogs(ctx context.Context) ([]*domain.Blog, error
 func (uc *blogUsecase) FetchPaginatedBlogs(ctx context.Context, page, limit int) ([]*domain.Blog, int64, error) {
 	return uc.blogRepo.FetchPaginatedBlogs(ctx, page, limit)
 }
+
+func (uc *blogUsecase) TrackView(ctx context.Context, blogID int64) error {
+	if blogID <= 0 {
+		return errors.New("invalid blog ID")
+	}
+	return uc.blogRepo.IncrementView(ctx, blogID)
+}
+
+func (uc *blogUsecase) LikeBlog(ctx context.Context, blogID, userID int64) error {
+	if blogID <= 0 {
+		return errors.New("invalid blog ID")
+	}
+	return uc.blogRepo.AddLike(ctx, blogID, userID)
+}
+
+func (uc *blogUsecase) UnlikeBlog(ctx context.Context, blogID, userID int64) error {
+	if blogID <= 0 {
+		return errors.New("invalid blog ID")
+	}
+	return uc.blogRepo.RemoveLike(ctx, blogID, userID)
+}
+
+func (uc *blogUsecase) GetPopularity(ctx context.Context, blogID int64) (int, int, error) {
+	if blogID <= 0 {
+		return 0, 0, errors.New("invalid blog ID")
+	}
+	return uc.blogRepo.GetPopularity(ctx, blogID)
+}
