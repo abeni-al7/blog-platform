@@ -27,6 +27,7 @@ type IBlogUsecase interface {
 	LikeBlog(ctx context.Context, blogID, userID int64) error
 	UnlikeBlog(ctx context.Context, blogID, userID int64) error
 	GetPopularity(ctx context.Context, blogID int64) (views int, likes int, err error)
+	SearchBlogs(ctx context.Context, query string, page, limit int) ([]*Blog, int64, error)
 }
 
 type IJWTInfrastructure interface {
