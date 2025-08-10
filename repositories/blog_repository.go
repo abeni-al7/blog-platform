@@ -83,3 +83,39 @@ func (r *BlogRepository) FetchPaginatedBlogs(ctx context.Context, page, limit in
 	}
 	return blogs, total, nil
 }
+
+func (r *BlogRepository) IncrementView(ctx context.Context, blogID int64) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.Blog{}).
+		Where("id = ?", blogID).
+		UpdateColumn("view_count", gorm.Expr("view_count + 1")).Error
+}
+
+func (r *BlogRepository) AddLike(ctx context.Context, blogID int64, _ int64) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.Blog{}).
+		Where("id = ?", blogID).
+		UpdateColumn("likes", gorm.Expr("likes + 1")).Error
+}
+
+func (r *BlogRepository) RemoveLike(ctx context.Context, blogID int64, _ int64) error {
+	// Portable clamp to zero
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var b domain.Blog
+		if err := tx.Select("id, likes").First(&b, blogID).Error; err != nil {
+			return err
+		}
+		if b.Likes > 0 {
+			b.Likes--
+		}
+		return tx.Model(&domain.Blog{}).Where("id = ?", blogID).Update("likes", b.Likes).Error
+	})
+}
+
+func (r *BlogRepository) GetPopularity(ctx context.Context, blogID int64) (int, int, error) {
+	var b domain.Blog
+	if err := r.db.WithContext(ctx).Select("id, view_count, likes").First(&b, blogID).Error; err != nil {
+		return 0, 0, err
+	}
+	return b.ViewCount, b.Likes, nil
+}
