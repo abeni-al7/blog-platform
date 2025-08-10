@@ -70,12 +70,8 @@ func (c *BlogController) GenerateBlogIdeas(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	aiService, ok := c.blogUsecase.(interface{ GetAIService() domain.IAIService })
-	if !ok {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "AI service not available"})
-		return
-	}
-	ideas, err := aiService.GetAIService().GenerateBlogIdeas(req.Topic)
+
+	ideas, err := c.blogUsecase.GenerateBlogIdeas(req.Topic)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -93,12 +89,8 @@ func (c *BlogController) SuggestBlogImprovements(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	aiService, ok := c.blogUsecase.(interface{ GetAIService() domain.IAIService })
-	if !ok {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "AI service not available"})
-		return
-	}
-	suggestion, err := aiService.GetAIService().SuggestBlogImprovements(req.Content)
+
+	suggestion, err := c.blogUsecase.SuggestBlogImprovements(req.Content)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

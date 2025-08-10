@@ -11,9 +11,16 @@ type IBlogRepository interface {
 	FetchAll(ctx context.Context) ([]*Blog, error)
 }
 
+type IAIService interface {
+	GenerateBlogIdeas(topic string) (string, error)
+	SuggestBlogImprovements(content string) (string, error)
+}
+
 type IBlogUsecase interface {
 	CreateBlog(ctx context.Context, blog *Blog, tags []string) error
 	FetchAllBlogs(ctx context.Context) ([]*Blog, error)
+	GenerateBlogIdeas(topic string) (string, error)
+	SuggestBlogImprovements(content string) (string, error)
 }
 
 type IJWTInfrastructure interface {
@@ -52,9 +59,4 @@ type IUserRepository interface {
 type IUserController interface {
 	Register(ctx *context.Context)
 	ActivateAccount(ctx *context.Context)
-}
-
-type IAIService interface {
-	GenerateBlogIdeas(topic string) (string, error)
-	SuggestBlogImprovements(content string) (string, error)
 }
