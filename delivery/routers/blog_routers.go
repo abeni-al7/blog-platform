@@ -14,4 +14,8 @@ func RegisterBlogRoutes(router *gin.Engine, blogController *controllers.BlogCont
 
 	router.GET("/blogs/paginated", blogController.FetchPaginatedBlogs)
 
+	router.POST("/blogs/:id/view", blogController.TrackView)
+	router.POST("/blogs/:id/like", blogController.LikeBlog)
+	router.DELETE("/blogs/:id/like", blogController.UnlikeBlog)
+	router.GET("/blogs/:id/popularity", blogController.GetPopularity)
 }
