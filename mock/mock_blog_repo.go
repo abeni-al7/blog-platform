@@ -63,3 +63,8 @@ func (m *MockBlogRepo) GetPopularity(ctx context.Context, blogID int64) (int, in
 	args := m.Called(ctx, blogID)
 	return args.Int(0), args.Int(1), args.Error(2)
 }
+
+func (m *MockBlogRepo) SearchBlogs(ctx context.Context, query string, page, limit int) ([]*domain.Blog, int64, error) {
+	args := m.Called(ctx, query, page, limit)
+	return args.Get(0).([]*domain.Blog), args.Get(1).(int64), args.Error(2)
+}
