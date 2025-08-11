@@ -1,0 +1,61 @@
+package mocks
+
+import (
+	"context"
+
+	"github.com/blog-platform/domain"
+	"github.com/stretchr/testify/mock"
+)
+
+type MockBlogRepo struct {
+	mock.Mock
+}
+
+func (m *MockBlogRepo) Create(ctx context.Context, blog *domain.Blog) error {
+	args := m.Called(ctx, blog)
+	return args.Error(0)
+}
+
+func (m *MockBlogRepo) FindOrCreateTag(ctx context.Context, tag string) (int64, error) {
+	args := m.Called(ctx, tag)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockBlogRepo) LinkTagToBlog(ctx context.Context, blogID int64, tagID int64) error {
+	args := m.Called(ctx, blogID, tagID)
+	return args.Error(0)
+}
+
+func (m *MockBlogRepo) FetchByID(ctx context.Context, id int64) (*domain.Blog, error) {
+	args := m.Called(ctx, id)
+	if blog, ok := args.Get(0).(*domain.Blog); ok {
+		return blog, args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
+func (m *MockBlogRepo) FetchAll(ctx context.Context) ([]*domain.Blog, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]*domain.Blog), args.Error(1)
+}
+
+func (m *MockBlogRepo) DeleteByID(ctx context.Context, ID int64, userID string) error {
+	args := m.Called(ctx, ID, userID)
+	return args.Error(0)
+}
+
+func (m *MockBlogRepo) FetchPaginatedBlogs(ctx context.Context, page, limit int) ([]*domain.Blog, int64, error) {
+	args := m.Called(ctx, page, limit)
+	return args.Get(0).([]*domain.Blog), args.Get(1).(int64), args.Error(2)
+
+}
+
+func (m *MockBlogRepo) UpdateByID(ctx context.Context, id int64, userID string, updates map[string]interface{}) error {
+	args := m.Called(ctx, id, userID, updates)
+	return args.Error(0)
+}
+
+func (m *MockBlogRepo) FetchByFilter(ctx context.Context, filter domain.BlogFilter) ([]*domain.Blog, error) {
+	args := m.Called(ctx, filter)
+	return args.Get(0).([]*domain.Blog), args.Error(1)
+}
