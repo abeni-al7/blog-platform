@@ -76,6 +76,33 @@ func (suite *BlogRepoTestSuite) TestDeleteByID() {
 	assert.NoError(suite.T(), err)
 }
 
+func (suite *BlogRepoTestSuite) TestUpdateByID_Success() {
+	updates := map[string]interface{}{
+		"title":   "New Title",
+		"content": "New Content",
+	}
+	suite.mock.ExpectBegin()
+	suite.mock.ExpectExec(`UPDATE "blogs" SET "content"=\$1,"title"=\$2,"updated_at"=\$3 WHERE id = \$4 AND user_id = \$5`).
+		WithArgs(updates["content"], updates["title"], sqlmock.AnyArg(), 1, "user123").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	suite.mock.ExpectCommit()
+
+	err := suite.repo.UpdateByID(context.Background(), 1, "user123", updates)
+	assert.NoError(suite.T(), err)
+}
+
+func (suite *BlogRepoTestSuite) TestUpdateByID_NotFound() {
+	updates := map[string]interface{}{"title": "Nope"}
+	suite.mock.ExpectBegin()
+	suite.mock.ExpectExec(`UPDATE "blogs" SET "title"=\$1,"updated_at"=\$2 WHERE id = \$3 AND user_id = \$4`).
+		WithArgs(updates["title"], sqlmock.AnyArg(), 999, "user123").
+		WillReturnResult(sqlmock.NewResult(0, 0))
+	suite.mock.ExpectCommit()
+
+	err := suite.repo.UpdateByID(context.Background(), 999, "user123", updates)
+	assert.Error(suite.T(), err)
+}
+
 func TestBlogRepoTestSuite(t *testing.T) {
 	suite.Run(t, new(BlogRepoTestSuite))
 }

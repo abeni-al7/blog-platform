@@ -68,6 +68,26 @@ func (suite *BlogUsecaseTestSuite) TestCreateBlogError() {
 	suite.mockRepo.AssertExpectations(suite.T())
 }
 
+func (suite *BlogUsecaseTestSuite) TestUpdateBlog_Success() {
+	ctx := context.Background()
+	updates := map[string]interface{}{"Title": "New", "Content": "Body"}
+	suite.mockRepo.On("UpdateByID", ctx, int64(1), "123", updates).Return(nil)
+	err := suite.usecase.UpdateBlog(ctx, 1, "123", updates)
+	assert.NoError(suite.T(), err)
+}
+
+func (suite *BlogUsecaseTestSuite) TestUpdateBlog_InvalidID() {
+	ctx := context.Background()
+	err := suite.usecase.UpdateBlog(ctx, 0, "123", map[string]interface{}{"Title": "X"})
+	assert.Error(suite.T(), err)
+}
+
+func (suite *BlogUsecaseTestSuite) TestUpdateBlog_EmptyTitle() {
+	ctx := context.Background()
+	err := suite.usecase.UpdateBlog(ctx, 1, "123", map[string]interface{}{"Title": ""})
+	assert.Error(suite.T(), err)
+}
+
 func TestBlogUsecaseTestSuite(t *testing.T) {
 	suite.Run(t, new(BlogUsecaseTestSuite))
 }
