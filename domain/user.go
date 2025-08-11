@@ -2,12 +2,11 @@ package domain
 
 import (
 	"time"
-
-	"gorm.io/gorm"
+	// "gorm.io/gorm"
 )
 
 type User struct {
-	gorm.Model
+	//gorm.Model
 	ID             int64     `gorm:"primaryKey;autoIncrement" json:"id"`
 	Username       string    `gorm:"type:varchar(255)" json:"username"`
 	Email          string    `gorm:"type:varchar(500)" json:"email"`
