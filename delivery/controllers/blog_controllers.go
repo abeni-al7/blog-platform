@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -21,6 +22,11 @@ type CreateBlogRequest struct {
 	Title   string `json:"title" binding:"required"`
 	Content string `json:"content" binding:"required"`
 	Tags    string `json:"tags" binding:"required"`
+}
+
+type UpdateBlogRequest struct {
+	Title   *string `json:"title,omitempty"`
+	Content *string `json:"content,omitempty"`
 }
 
 func (c *BlogController) CreateBlog(ctx *gin.Context) {
@@ -73,6 +79,7 @@ func (c *BlogController) GetBlogByID(ctx *gin.Context) {
 
 func (c *BlogController) GetBlogs(ctx *gin.Context) {
 	blogs, err := c.blogUsecase.FetchAllBlogs(ctx.Request.Context())
+	log.Println(err)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch blogs"})
 		return
@@ -82,16 +89,17 @@ func (c *BlogController) GetBlogs(ctx *gin.Context) {
 }
 
 func (bc *BlogController) DeleteBlog(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
+	userIDVal1, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
-	userID, ok := userIDVal.(string)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user id type"})
-		return
-	}
+	userIDVal, _ := userIDVal1.(int64)
+	userID := strconv.FormatInt(userIDVal, 10)
+	// if !userID {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user id type"})
+	// 	return
+	// }
 
 	blogIDStr := c.Param("id")
 	blogID, err := strconv.ParseInt(blogIDStr, 10, 64)
@@ -111,6 +119,44 @@ func (bc *BlogController) DeleteBlog(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "blog deleted successfully"})
+}
+
+func (c *BlogController) UpdateBlog(ctx *gin.Context) {
+	userIDVal, exists := ctx.Get("user_id")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userID := strconv.FormatInt(userIDVal.(int64), 10)
+
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid blog id"})
+		return
+	}
+
+	var req UpdateBlogRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	updates := map[string]interface{}{}
+	if req.Title != nil {
+		updates["Title"] = *req.Title
+	}
+	if req.Content != nil {
+		updates["Content"] = *req.Content
+	}
+	if err := c.blogUsecase.UpdateBlog(ctx.Request.Context(), id, userID, updates); err != nil {
+		if err.Error() == "blog not found" {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"message": "blog updated"})
 }
 
 func (h *BlogController) FetchPaginatedBlogs(ctx *gin.Context) {

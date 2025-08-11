@@ -27,15 +27,15 @@ func AuthRoutes(group *gin.RouterGroup) {
 	group.POST("/logout", ao.AuthMiddleware(), uc.Logout)
 	group.POST("/reset-password", ao.AuthMiddleware(), uc.ResetPassword)
 	group.POST("/forgot-password", uc.ForgotPassword)
-	group.POST("/password/:id/update", uc.UpdatePasswordDirect)
-	group.GET("/users/:id", ao.AccountOwnerMiddleware(), uc.GetProfile)
-  
+	group.POST("/password/:id/update", ao.AuthMiddleware(), uc.UpdatePasswordDirect)
+	group.GET("/users/:id", ao.AuthMiddleware(), ao.AccountOwnerMiddleware(), uc.GetProfile)
+
 	adminRoutes := group.Group("/users")
 	adminRoutes.Use(ao.AuthMiddleware(), ao.AdminMiddleware())
 	{
 		adminRoutes.PUT("/:id/promote", uc.Promote)
 		adminRoutes.PUT("/:id/demote", uc.Demote)
 	}
-  
-	group.PATCH("/users/:id", ao.AccountOwnerMiddleware(), uc.UpdateProfile)
+
+	group.PATCH("/users/:id", ao.AuthMiddleware(), uc.UpdateProfile)
 }

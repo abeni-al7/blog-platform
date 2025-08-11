@@ -1,4 +1,4 @@
-package usecases
+package test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/blog-platform/domain"
 	"github.com/blog-platform/mock"
+	"github.com/blog-platform/usecases"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -29,7 +30,7 @@ type BlogUsecaseTestSuite struct {
 func (suite *BlogUsecaseTestSuite) SetupTest() {
 	suite.mockRepo = new(mock.MockBlogRepo)
 	suite.mockAI = &MockAIService{}
-	suite.usecase = NewBlogUsecase(suite.mockRepo, suite.mockAI)
+	suite.usecase = usecases.NewBlogUsecase(suite.mockRepo, suite.mockAI)
 }
 
 func (suite *BlogUsecaseTestSuite) TestCreateBlog_Success() {
@@ -91,6 +92,26 @@ func (suite *BlogUsecaseTestSuite) TestFetchBlogsByFilter_Error() {
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), blogs)
 	suite.mockRepo.AssertExpectations(suite.T())
+}
+
+func (suite *BlogUsecaseTestSuite) TestUpdateBlog_Success() {
+	ctx := context.Background()
+	updates := map[string]interface{}{"Title": "New", "Content": "Body"}
+	suite.mockRepo.On("UpdateByID", ctx, int64(1), "123", updates).Return(nil)
+	err := suite.usecase.UpdateBlog(ctx, 1, "123", updates)
+	assert.NoError(suite.T(), err)
+}
+
+func (suite *BlogUsecaseTestSuite) TestUpdateBlog_InvalidID() {
+	ctx := context.Background()
+	err := suite.usecase.UpdateBlog(ctx, 0, "123", map[string]interface{}{"Title": "X"})
+	assert.Error(suite.T(), err)
+}
+
+func (suite *BlogUsecaseTestSuite) TestUpdateBlog_EmptyTitle() {
+	ctx := context.Background()
+	err := suite.usecase.UpdateBlog(ctx, 1, "123", map[string]interface{}{"Title": ""})
+	assert.Error(suite.T(), err)
 }
 
 func TestBlogUsecaseTestSuite(t *testing.T) {

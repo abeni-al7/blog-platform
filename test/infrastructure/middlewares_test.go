@@ -121,30 +121,38 @@ func (suite *MiddlewareTestSuite) TestAdminMiddleware_NoRole() {
 }
 
 func (suite *MiddlewareTestSuite) TestAccountOwnerMiddleware_Success() {
-	req, _ := http.NewRequest("GET", "/users/user123", nil)
+	req, _ := http.NewRequest("GET", "/users/123", nil)
 	w := httptest.NewRecorder()
 
-	suite.router.GET("/users/:id", func(c *gin.Context) {
-		c.Set("user_id", "user123")
-		c.Next()
-	}, suite.middleware.AccountOwnerMiddleware(), func(c *gin.Context) {
-		c.Status(http.StatusOK)
-	})
+	suite.router.GET("/users/:id",
+		func(c *gin.Context) {
+			c.Set("user_id", int64(123))
+			c.Next()
+		},
+		suite.middleware.AccountOwnerMiddleware(),
+		func(c *gin.Context) {
+			c.Status(http.StatusOK)
+		},
+	)
 	suite.router.ServeHTTP(w, req)
 
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
 }
 
 func (suite *MiddlewareTestSuite) TestAccountOwnerMiddleware_Forbidden() {
-	req, _ := http.NewRequest("GET", "/users/user456", nil)
+	req, _ := http.NewRequest("GET", "/users/456", nil)
 	w := httptest.NewRecorder()
 
-	suite.router.GET("/users/:id", func(c *gin.Context) {
-		c.Set("user_id", "user123")
-		c.Next()
-	}, suite.middleware.AccountOwnerMiddleware(), func(c *gin.Context) {
-		c.Status(http.StatusOK)
-	})
+	suite.router.GET("/users/:id",
+		func(c *gin.Context) {
+			c.Set("user_id", int64(123))
+			c.Next()
+		},
+		suite.middleware.AccountOwnerMiddleware(),
+		func(c *gin.Context) {
+			c.Status(http.StatusOK)
+		},
+	)
 	suite.router.ServeHTTP(w, req)
 
 	assert.Equal(suite.T(), http.StatusForbidden, w.Code)

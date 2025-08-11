@@ -50,8 +50,8 @@ func (s *UserRepositoryTestSuite) TestRegister_Success() {
 	}
 
 	s.mock.ExpectBegin()
-	s.mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "users" ("created_at","updated_at","deleted_at","username","email","password","role","bio","profile_picture","phone","status") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING "id"`)).
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), user.Username, user.Email, user.Password, "", "", "", "", user.Status).
+	s.mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "users" ("username","email","password","role","bio","profile_picture","phone","status","created_at","updated_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "id"`)).
+		WithArgs(user.Username, user.Email, user.Password, "", "", "", "", user.Status, sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 	s.mock.ExpectCommit()
 
@@ -70,8 +70,8 @@ func (s *UserRepositoryTestSuite) TestRegister_Error() {
 	}
 
 	s.mock.ExpectBegin()
-	s.mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "users" ("created_at","updated_at","deleted_at","username","email","password","role","bio","profile_picture","phone","status") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING "id"`)).
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), user.Username, user.Email, user.Password, "", "", "", "", user.Status).
+	s.mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "users" ("username","email","password","role","bio","profile_picture","phone","status","created_at","updated_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "id"`)).
+		WithArgs(user.Username, user.Email, user.Password, "", "", "", "", user.Status, sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnError(errors.New("db error"))
 	s.mock.ExpectRollback()
 
@@ -85,7 +85,7 @@ func (s *UserRepositoryTestSuite) TestFetchByEmail_Success() {
 
 	rows := sqlmock.NewRows([]string{"id", "email", "username"}).
 		AddRow(user.ID, user.Email, user.Username)
-	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE email = $1 AND "users"."deleted_at" IS NULL ORDER BY "users"."id" LIMIT $2`)).
+	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE email = $1 ORDER BY "users"."id" LIMIT $2`)).
 		WithArgs(email, 1).
 		WillReturnRows(rows)
 
@@ -97,8 +97,8 @@ func (s *UserRepositoryTestSuite) TestFetchByEmail_Success() {
 func (s *UserRepositoryTestSuite) TestFetchByEmail_NotFound() {
 	email := "test@example.com"
 
-	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE email = $1 ORDER BY "users"."id" LIMIT 1`)).
-		WithArgs(email).
+	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE email = $1 ORDER BY "users"."id" LIMIT $2`)).
+		WithArgs(email, 1).
 		WillReturnError(gorm.ErrRecordNotFound)
 
 	_, err := s.repo.FetchByEmail(email)
@@ -111,7 +111,7 @@ func (s *UserRepositoryTestSuite) TestFetchByUsername_Success() {
 
 	rows := sqlmock.NewRows([]string{"id", "email", "username"}).
 		AddRow(user.ID, user.Email, user.Username)
-	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE username = $1 AND "users"."deleted_at" IS NULL ORDER BY "users"."id" LIMIT $2`)).
+	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE username = $1 ORDER BY "users"."id" LIMIT $2`)).
 		WithArgs(username, 1).
 		WillReturnRows(rows)
 
@@ -123,8 +123,8 @@ func (s *UserRepositoryTestSuite) TestFetchByUsername_Success() {
 func (s *UserRepositoryTestSuite) TestFetchByUsername_NotFound() {
 	username := "testuser"
 
-	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE username = $1 ORDER BY "users"."id" LIMIT 1`)).
-		WithArgs(username).
+	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE username = $1 ORDER BY "users"."id" LIMIT $2`)).
+		WithArgs(username, 1).
 		WillReturnError(gorm.ErrRecordNotFound)
 
 	_, err := s.repo.FetchByUsername(username)
@@ -133,7 +133,7 @@ func (s *UserRepositoryTestSuite) TestFetchByUsername_NotFound() {
 
 func (s *UserRepositoryTestSuite) TestActivateAccount_Success() {
 	s.mock.ExpectBegin()
-	s.mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET "status"=$1,"updated_at"=$2 WHERE id = $3 AND "users"."deleted_at" IS NULL`)).
+	s.mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET "status"=$1,"updated_at"=$2 WHERE id = $3`)).
 		WithArgs("active", sqlmock.AnyArg(), 1).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	s.mock.ExpectCommit()
@@ -150,8 +150,8 @@ func (s *UserRepositoryTestSuite) TestActivateAccount_InvalidID() {
 
 func (s *UserRepositoryTestSuite) TestActivateAccount_DBError() {
 	s.mock.ExpectBegin()
-	s.mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET "status"=$1 WHERE "id" = $2`)).
-		WithArgs("active", 1).
+	s.mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET "status"=$1,"updated_at"=$2 WHERE id = $3`)).
+		WithArgs("active", sqlmock.AnyArg(), 1).
 		WillReturnError(errors.New("db error"))
 	s.mock.ExpectRollback()
 
@@ -161,8 +161,8 @@ func (s *UserRepositoryTestSuite) TestActivateAccount_DBError() {
 
 func (s *UserRepositoryTestSuite) TestActivateAccount_NoRowsAffected() {
 	s.mock.ExpectBegin()
-	s.mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET "status"=$1 WHERE "id" = $2`)).
-		WithArgs("active", 1).
+	s.mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET "status"=$1,"updated_at"=$2 WHERE id = $3`)).
+		WithArgs("active", sqlmock.AnyArg(), 1).
 		WillReturnResult(sqlmock.NewResult(1, 0))
 	s.mock.ExpectCommit()
 
@@ -175,7 +175,7 @@ func (s *UserRepositoryTestSuite) TestFetch_Success() {
 
 	rows := sqlmock.NewRows([]string{"id", "email", "username", "password", "role", "bio", "profile_picture", "phone", "status"}).
 		AddRow(user.ID, user.Email, user.Username, user.Password, user.Role, user.Bio, user.ProfilePicture, user.Phone, user.Status)
-	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE id = $1 AND "users"."deleted_at" IS NULL ORDER BY "users"."id" LIMIT $2`)).
+	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE id = $1 ORDER BY "users"."id" LIMIT $2`)).
 		WithArgs(1, 1).
 		WillReturnRows(rows)
 
@@ -191,8 +191,8 @@ func (s *UserRepositoryTestSuite) TestFetch_InvalidID() {
 }
 
 func (s *UserRepositoryTestSuite) TestFetch_NotFound() {
-	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE id = $1 ORDER BY "users"."id" LIMIT 1`)).
-		WithArgs(1).
+	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE id = $1 ORDER BY "users"."id" LIMIT $2`)).
+		WithArgs(1, 1).
 		WillReturnError(gorm.ErrRecordNotFound)
 
 	_, err := s.repo.Fetch("1")
@@ -203,7 +203,7 @@ func (s *UserRepositoryTestSuite) TestGetUserProfile_Success() {
 	user := domain.User{ID: 1, Email: "test@example.com", Username: "testuser"}
 	rows := sqlmock.NewRows([]string{"id", "email", "username"}).
 		AddRow(user.ID, user.Email, user.Username)
-	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE "users"."id" = $1 AND "users"."deleted_at" IS NULL ORDER BY "users"."id" LIMIT $2`)).
+	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" LIMIT $2`)).
 		WithArgs(user.ID, 1).
 		WillReturnRows(rows)
 
@@ -215,7 +215,7 @@ func (s *UserRepositoryTestSuite) TestGetUserProfile_Success() {
 }
 
 func (s *UserRepositoryTestSuite) TestGetUserProfile_NotFound() {
-	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE "users"."id" = $1 AND "users"."deleted_at" IS NULL ORDER BY "users"."id" LIMIT $2`)).
+	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" LIMIT $2`)).
 		WithArgs(int64(2), 1).
 		WillReturnError(gorm.ErrRecordNotFound)
 
@@ -231,7 +231,7 @@ func (s *UserRepositoryTestSuite) TestUpdateUserProfile_Success() {
 		"Bio":      "updated bio",
 	}
 	s.mock.ExpectBegin()
-	s.mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET "bio"=$1,"username"=$2,"updated_at"=$3 WHERE id = $4 AND "users"."deleted_at" IS NULL`)).
+	s.mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET "bio"=$1,"username"=$2,"updated_at"=$3 WHERE id = $4`)).
 		WithArgs("updated bio", "updateduser", sqlmock.AnyArg(), userID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	s.mock.ExpectCommit()
@@ -249,12 +249,12 @@ func (s *UserRepositoryTestSuite) TestUpdateUserProfile_NoFields() {
 	s.NoError(err)
 }
 func (s *UserRepositoryTestSuite) TestResetPassword_Success() {
-	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE "users"."id" = $1 AND "users"."deleted_at" IS NULL ORDER BY "users"."id" LIMIT $2`)).
+	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" LIMIT $2`)).
 		WithArgs(1, 1).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "password"}).AddRow(1, "old_hashed"))
 
 	s.mock.ExpectBegin()
-	s.mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET "password"=$1,"updated_at"=$2 WHERE "users"."deleted_at" IS NULL AND "id" = $3`)).
+	s.mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET "password"=$1,"updated_at"=$2 WHERE "id" = $3`)).
 		WithArgs("new_hashed", sqlmock.AnyArg(), 1).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	s.mock.ExpectCommit()
@@ -276,11 +276,11 @@ func (s *UserRepositoryTestSuite) TestResetPassword_UserNotFound() {
 }
 
 func (s *UserRepositoryTestSuite) TestResetPassword_UpdateError() {
-	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE "users"."id" = $1 AND "users"."deleted_at" IS NULL ORDER BY "users"."id" LIMIT $2`)).
+	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" LIMIT $2`)).
 		WithArgs(1, 1).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "password"}).AddRow(1, "old_hashed"))
 	s.mock.ExpectBegin()
-	s.mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET "password"=$1,"updated_at"=$2 WHERE "users"."deleted_at" IS NULL AND "id" = $3`)).
+	s.mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET "password"=$1,"updated_at"=$2 WHERE "id" = $3`)).
 		WithArgs("new_hashed", sqlmock.AnyArg(), 1).
 		WillReturnError(errors.New("db error"))
 	s.mock.ExpectRollback()
