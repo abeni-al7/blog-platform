@@ -13,7 +13,6 @@ type BlogController struct {
 	blogUsecase domain.IBlogUsecase
 }
 
-
 func NewBlogController(uc domain.IBlogUsecase) *BlogController {
 	return &BlogController{blogUsecase: uc}
 }
@@ -112,6 +111,7 @@ func (bc *BlogController) DeleteBlog(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "blog deleted successfully"})
+}
 
 func (h *BlogController) FetchPaginatedBlogs(ctx *gin.Context) {
 	pageStr := ctx.DefaultQuery("page", "1")

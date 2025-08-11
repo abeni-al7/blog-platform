@@ -6,8 +6,8 @@ import (
 	"net/mail"
 	"os"
 	"strconv"
-	"unicode"
 	"strings"
+	"unicode"
 
 	"github.com/blog-platform/domain"
 )
