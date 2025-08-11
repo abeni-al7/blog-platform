@@ -11,7 +11,7 @@ type User struct {
 	ID             int64     `gorm:"primaryKey;autoIncrement" json:"id"`
 	Username       string    `gorm:"type:varchar(255)" json:"username"`
 	Email          string    `gorm:"type:varchar(500)" json:"email"`
-	Password       string    `gorm:"type:varchar(255)" json:"_"`
+	Password       string    `gorm:"type:varchar(255)" json:"-"`
 	Role           string    `gorm:"type:varchar(255)" json:"role"`
 	Bio            string    `json:"bio"`
 	ProfilePicture string    `gorm:"type:varchar(500)" json:"profile_picture"`
