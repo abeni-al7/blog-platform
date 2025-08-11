@@ -219,3 +219,46 @@ func (c *BlogController) SuggestBlogImprovements(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"suggestion": suggestion})
 
 }
+
+func (bc *BlogController) FilterBlogs(c *gin.Context) {
+	// Parse query params
+	title := c.Query("title")
+	userIDStr := c.Query("user_id")
+	limitStr := c.DefaultQuery("limit", "10")
+	offsetStr := c.DefaultQuery("offset", "0")
+
+	var userIDPtr *int64
+	if userIDStr != "" {
+		uid, err := strconv.ParseInt(userIDStr, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
+			return
+		}
+		userIDPtr = &uid
+	}
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		offset = 0
+	}
+
+	filter := domain.BlogFilter{
+		TitleContains: title,
+		UserID:        userIDPtr,
+		Limit:         limit,
+		Offset:        offset,
+	}
+
+	blogs, err := bc.blogUsecase.FetchBlogsByFilter(c.Request.Context(), filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, blogs)
+}

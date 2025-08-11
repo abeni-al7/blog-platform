@@ -158,3 +158,31 @@ func (r *BlogRepository) FetchPaginatedBlogs(ctx context.Context, page, limit in
 	return blogs, total, nil
 
 }
+
+func (r *BlogRepository) FetchByFilter(ctx context.Context, filter domain.BlogFilter) ([]*domain.Blog, error) {
+	var blogs []*domain.Blog
+	query := r.db.WithContext(ctx).Model(&domain.Blog{})
+
+	if filter.TitleContains != "" {
+		query = query.Where("title ILIKE ?", "%"+filter.TitleContains+"%")
+	}
+
+	if filter.UserID != nil {
+		query = query.Where("user_id = ?", *filter.UserID)
+	}
+
+	if filter.Limit > 0 {
+		query = query.Limit(filter.Limit)
+	}
+
+	if filter.Offset >= 0 {
+		query = query.Offset(filter.Offset)
+	}
+
+	err := query.Find(&blogs).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return blogs, nil
+}

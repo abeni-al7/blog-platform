@@ -54,3 +54,8 @@ func (m *MockBlogRepo) UpdateByID(ctx context.Context, id int64, userID string, 
 	args := m.Called(ctx, id, userID, updates)
 	return args.Error(0)
 }
+
+func (m *MockBlogRepo) FetchByFilter(ctx context.Context, filter domain.BlogFilter) ([]*domain.Blog, error) {
+	args := m.Called(ctx, filter)
+	return args.Get(0).([]*domain.Blog), args.Error(1)
+}
