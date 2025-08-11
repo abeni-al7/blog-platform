@@ -79,7 +79,6 @@ func (uc *blogUsecase) FetchAllBlogs(ctx context.Context) ([]*domain.Blog, error
 	return blogs, nil
 }
 
-
 func (u *blogUsecase) DeleteBlog(ctx context.Context, ID int64, userID string) error {
 	return u.blogRepo.DeleteByID(ctx, ID, userID)
 }

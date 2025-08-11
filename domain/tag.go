@@ -2,12 +2,11 @@ package domain
 
 import (
 	"time"
-
-	"gorm.io/gorm"
+	//"gorm.io/gorm"
 )
 
 type Tag struct {
-	gorm.Model
+	//gorm.Model
 	ID        int64     `gorm:"primaryKey;autoIncrement" json:"id"`
 	Name      string    `gorm:"type:varchar(100);uniqueIndex" json:"name"` // Unique tag name
 	Content   string    `gorm:"type:varchar(500)" json:"content"`
@@ -16,7 +15,7 @@ type Tag struct {
 }
 
 type Tag_Blog struct {
-	gorm.Model
+	//gorm.Model
 	ID        int64     `gorm:"primaryKey;autoIncrement" json:"id"`
 	BlogID    int64     `json:"blog_id"`                                        // Foreign key column
 	Blog      Blog      `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"` // GORM relation

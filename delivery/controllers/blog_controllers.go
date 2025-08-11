@@ -13,7 +13,6 @@ type BlogController struct {
 	blogUsecase domain.IBlogUsecase
 }
 
-
 func NewBlogController(uc domain.IBlogUsecase) *BlogController {
 	return &BlogController{blogUsecase: uc}
 }

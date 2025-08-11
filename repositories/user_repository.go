@@ -150,3 +150,12 @@ func (ur *UserRepository) ResetPassword(idStr string, newPassword string) error 
 
 	return nil
 }
+
+func (ur *UserRepository) CountUsers() (int64, error) {
+	var count int64
+	err := ur.DB.Model(&domain.User{}).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
