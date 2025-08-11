@@ -111,10 +111,11 @@ Response:
 | Method | URL                        | Auth         | Description                       |
 |--------|----------------------------|--------------|-----------------------------------|
 | POST   | /blogs                     | Yes          | Create a new blog                 |
-| GET    | /blogs                     | No           | List all blogs                    |
-| GET    | /blogs/:id                 | No           | Get a blog by ID                  |
+| GET    | /blogs                     | Yes          | List all blogs                    |
+| GET    | /blogs/:id                 | Yes          | Get a blog by ID                  |
 | DELETE | /blogs/:id                 | Owner/Admin  | Delete a blog                     |
-| GET    | /blogs/paginated           | No           | Get paginated blogs               |
+| GET    | /blogs/paginated           | Yes          | Get paginated blogs               |
+| GET    | /blogs/filter              | Yes          | Filter blogs by title/user with limit/offset |
 | POST   | /blogs/ideas               | Yes          | Generate blog ideas (AI)          |
 | POST   | /blogs/improve             | Yes          | Suggest blog improvements (AI)    |
 
@@ -306,5 +307,46 @@ PORT=8080
 - API documentation (Swagger/OpenAPI)
 - More granular permissions/roles
 - WebSocket support for real-time updates
+
+---
+
+### Filter Blogs
+
+Filter blogs using query parameters. All fields are optional unless stated otherwise.
+
+- Endpoint: GET /blogs/filter
+- Auth: Yes (Authorization: Bearer <token>)
+- Query parameters:
+  - title: string (optional, substring match on title)
+  - user_id: int64 (optional, filter by author)
+  - limit: int (optional, default 10, min 1)
+  - offset: int (optional, default 0, min 0)
+
+Example request (filter by title contains "go"):
+
+GET /blogs/filter?title=go&limit=5&offset=0
+
+Example 200 response:
+[
+  {
+    "id": 42,
+    "title": "Go Concurrency Patterns",
+    "content": "…",
+    "user_id": 123,
+    "tags": [
+      { "id": 1, "name": "go" },
+      { "id": 2, "name": "concurrency" }
+    ],
+    "created_at": "2025-08-11T10:00:00Z",
+    "updated_at": "2025-08-11T10:00:00Z"
+  }
+]
+
+Example request (filter by user):
+
+GET /blogs/filter?user_id=123&limit=10&offset=0
+
+Example 400 response (invalid user_id):
+{ "error": "invalid user_id" }
 
 ---
