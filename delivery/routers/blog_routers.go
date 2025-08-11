@@ -19,19 +19,20 @@ func BlogRoutes(router *gin.RouterGroup) {
 	ao := infrastructure.NewMiddleware(js)
 	ai := infrastructure.NewChatGPTAIService()
 	uu := usecases.NewBlogUsecase(ur, ai)
-	uc := controllers.NewBlogController(uu)
+	bc := controllers.NewBlogController(uu)
 
 	blogRoutes := router.Group("/blogs")
 	blogRoutes.Use(ao.AuthMiddleware())
 	{
-		blogRoutes.POST("", uc.CreateBlog)
-		blogRoutes.GET("/:id", uc.GetBlogByID)
-		blogRoutes.GET("", uc.GetBlogs)
-		blogRoutes.DELETE("/:id", uc.DeleteBlog)
-		blogRoutes.PATCH("/:id", uc.UpdateBlog)
-		blogRoutes.GET("/paginated", uc.FetchPaginatedBlogs)
-		blogRoutes.POST("/ideas", uc.GenerateBlogIdeas)
-		blogRoutes.POST("/improve", uc.SuggestBlogImprovements)
+		blogRoutes.POST("", bc.CreateBlog)
+		blogRoutes.GET("/:id", bc.GetBlogByID)
+		blogRoutes.GET("", bc.GetBlogs)
+		blogRoutes.DELETE("/:id", bc.DeleteBlog)
+		blogRoutes.PATCH("/:id", bc.UpdateBlog)
+		blogRoutes.GET("/paginated", bc.FetchPaginatedBlogs)
+		blogRoutes.POST("/ideas", bc.GenerateBlogIdeas)
+		blogRoutes.POST("/improve", bc.SuggestBlogImprovements)
+		blogRoutes.GET("/filter", bc.FilterBlogs)
 	}
 
 }
