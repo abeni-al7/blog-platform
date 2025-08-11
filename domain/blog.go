@@ -15,6 +15,7 @@ type Blog struct {
 	Dislikes  int       `json:"dislikes"`
 	UserID    int64     `json:"user_id"`                                        // Foreign key column
 	User      User      `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"` // GORM relation
-	CreatedAt time.Time `json:"created_at"`                                     // auto set on insert
-	UpdatedAt time.Time `json:"updated_at"`                                     // auto set on update
+	Tags      []Tag     `gorm:"many2many:tag_blogs;" json:"tags"`
+	CreatedAt time.Time `json:"created_at"` // auto set on insert
+	UpdatedAt time.Time `json:"updated_at"` // auto set on update
 }
