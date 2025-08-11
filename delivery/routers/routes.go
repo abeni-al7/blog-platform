@@ -6,5 +6,6 @@ func Init(gin *gin.Engine) *gin.Engine {
 	freeRoutes := gin.Group("")
 
 	AuthRoutes(freeRoutes)
+	BlogRoutes(freeRoutes)
 	return gin
 }
