@@ -42,6 +42,7 @@ func (m *MockBlogRepo) FetchAll(ctx context.Context) ([]*domain.Blog, error) {
 func (m *MockBlogRepo) DeleteByID(ctx context.Context, ID int64, userID string) error {
 	args := m.Called(ctx, ID, userID)
 	return args.Error(0)
+}
 
 func (m *MockBlogRepo) FetchPaginatedBlogs(ctx context.Context, page, limit int) ([]*domain.Blog, int64, error) {
 	args := m.Called(ctx, page, limit)
