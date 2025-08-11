@@ -51,8 +51,11 @@ func (ur *UserRepository) ActivateAccount(idStr string) error {
 	}
 
 	result := ur.DB.Model(&domain.User{}).Where("id = ?", id).Update("status", "active")
-	if result.Error != nil || result.RowsAffected == 0 {
+	if result.Error != nil {
 		return errors.New(result.Error.Error())
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("no rows affected")
 	}
 
 	return nil
