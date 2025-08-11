@@ -71,6 +71,7 @@ func (r *BlogRepository) DeleteByID(ctx context.Context, ID int64, userID string
 	}
 	return result.Error
 }
+
 func Paginate(page, limit int) func(db *gorm.DB) *gorm.DB {
 	return func(fb *gorm.DB) *gorm.DB {
 		offset := (page - 1) * limit
