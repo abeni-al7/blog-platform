@@ -32,7 +32,6 @@ func (m *Middleware) AuthMiddleware() gin.HandlerFunc {
 
 		ctx.Set("user_id", userID)
 		ctx.Set("role", role)
-
 		ctx.Next()
 	}
 }
@@ -55,7 +54,15 @@ func (m *Middleware) AccountOwnerMiddleware() gin.HandlerFunc {
 		id := ctx.Param("id")
 		userID, ok := ctx.Get("user_id")
 
-		if !ok || userID != id {
+		idInt, err := strconv.ParseInt(id, 10, 64)
+		if err != nil || !ok {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "unauthorized to access this route"})
+			ctx.Abort()
+			return
+		}
+
+		userIDInt, ok := userID.(int64)
+		if !ok || userIDInt != idInt {
 			ctx.JSON(http.StatusForbidden, gin.H{"error": "unauthorized to access this route"})
 			ctx.Abort()
 			return
