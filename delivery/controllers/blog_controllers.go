@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -73,6 +74,7 @@ func (c *BlogController) GetBlogByID(ctx *gin.Context) {
 
 func (c *BlogController) GetBlogs(ctx *gin.Context) {
 	blogs, err := c.blogUsecase.FetchAllBlogs(ctx.Request.Context())
+	log.Println(err)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch blogs"})
 		return
@@ -82,16 +84,17 @@ func (c *BlogController) GetBlogs(ctx *gin.Context) {
 }
 
 func (bc *BlogController) DeleteBlog(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
+	userIDVal1, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
-	userID, ok := userIDVal.(string)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user id type"})
-		return
-	}
+	userIDVal, _ := userIDVal1.(int64)
+	userID := strconv.FormatInt(userIDVal, 10)
+	// if !userID {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user id type"})
+	// 	return
+	// }
 
 	blogIDStr := c.Param("id")
 	blogID, err := strconv.ParseInt(blogIDStr, 10, 64)
