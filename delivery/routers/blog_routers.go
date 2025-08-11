@@ -28,6 +28,7 @@ func BlogRoutes(router *gin.RouterGroup) {
 		blogRoutes.GET("/:id", uc.GetBlogByID)
 		blogRoutes.GET("", uc.GetBlogs)
 		blogRoutes.DELETE("/:id", uc.DeleteBlog)
+		blogRoutes.PATCH("/:id", uc.UpdateBlog)
 		blogRoutes.GET("/paginated", uc.FetchPaginatedBlogs)
 		blogRoutes.POST("/ideas", uc.GenerateBlogIdeas)
 		blogRoutes.POST("/improve", uc.SuggestBlogImprovements)

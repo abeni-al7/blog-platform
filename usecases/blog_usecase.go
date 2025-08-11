@@ -83,6 +83,34 @@ func (u *blogUsecase) DeleteBlog(ctx context.Context, ID int64, userID string) e
 	return u.blogRepo.DeleteByID(ctx, ID, userID)
 }
 
+func (uc *blogUsecase) UpdateBlog(ctx context.Context, id int64, userID string, updates map[string]interface{}) error {
+	if id <= 0 {
+		return errors.New("invalid blog ID")
+	}
+	// allow only certain fields
+	allowed := map[string]bool{
+		"Title":   true,
+		"Content": true,
+	}
+	filtered := make(map[string]interface{})
+	for k, v := range updates {
+		if allowed[k] {
+			// simple validation
+			if k == "Title" && v == "" {
+				return errors.New("title cannot be empty")
+			}
+			if k == "Content" && v == "" {
+				return errors.New("content cannot be empty")
+			}
+			filtered[k] = v
+		}
+	}
+	if len(filtered) == 0 {
+		return nil
+	}
+	return uc.blogRepo.UpdateByID(ctx, id, userID, filtered)
+}
+
 func (uc *blogUsecase) GenerateBlogIdeas(topic string) (string, error) {
 	return uc.aiService.GenerateBlogIdeas(topic)
 }
