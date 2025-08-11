@@ -14,7 +14,7 @@ The Blog Platform backend is a robust RESTful API designed to power a modern blo
 - AI-powered blog idea generation and improvement suggestions (optional)
 
 ---
-
+## You can access the Postman documentation here:[Postman docs](https://documenter.getpostman.com/view/42847133/2sB3BEoViy)
 ## Architecture
 
 - **Style:** Layered architecture, RESTful API
@@ -56,11 +56,11 @@ The Blog Platform backend is a robust RESTful API designed to power a modern blo
 |--------|----------------------------|--------------|-----------------------------------|
 | POST   | /register                  | No           | Register a new user               |
 | POST   | /login                     | No           | Login and receive tokens          |
-| POST   | /token/refresh             | No           | Refresh JWT tokens                |
+| POST   | /token/refresh             | Yes           | Refresh JWT tokens                |
 | POST   | /logout                    | Yes          | Logout (invalidate tokens)        |
 | POST   | /reset-password            | Yes          | Change password (logged in)       |
 | POST   | /forgot-password           | No           | Request password reset email      |
-| POST   | /password/:id/update       | No           | Set new password (via token)      |
+| POST   | /password/:id/update       | Yes           | Set new password (via token)      |
 | GET    | /users/:id                 | Owner/Admin  | Get user profile                  |
 | PATCH  | /users/:id                 | Owner/Admin  | Update user profile               |
 | PUT    | /users/:id/promote         | Admin        | Promote user to admin             |
