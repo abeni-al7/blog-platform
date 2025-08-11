@@ -97,3 +97,7 @@ func (uc *blogUsecase) FetchPaginatedBlogs(ctx context.Context, page, limit int)
 	return uc.blogRepo.FetchPaginatedBlogs(ctx, page, limit)
 
 }
+
+func (uc *blogUsecase) FetchBlogsByFilter(ctx context.Context, filter domain.BlogFilter) ([]*domain.Blog, error) {
+	return uc.blogRepo.FetchByFilter(ctx, filter)
+}
