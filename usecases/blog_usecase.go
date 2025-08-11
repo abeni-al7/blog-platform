@@ -82,6 +82,7 @@ func (uc *blogUsecase) FetchAllBlogs(ctx context.Context) ([]*domain.Blog, error
 
 func (u *blogUsecase) DeleteBlog(ctx context.Context, ID int64, userID string) error {
 	return u.blogRepo.DeleteByID(ctx, ID, userID)
+}
 
 func (uc *blogUsecase) GenerateBlogIdeas(topic string) (string, error) {
 	return uc.aiService.GenerateBlogIdeas(topic)
