@@ -29,6 +29,7 @@ type IBlogUsecase interface {
 	GenerateBlogIdeas(topic string) (string, error)
 	SuggestBlogImprovements(content string) (string, error)
 	FetchBlogsByFilter(ctx context.Context, filter BlogFilter) ([]*Blog, error)
+
 }
 
 type IJWTInfrastructure interface {
@@ -79,6 +80,7 @@ type IUserRepository interface {
 	Demote(idStr string) error
 	UpdateUserProfile(userID int64, updates map[string]interface{}) error
 	ResetPassword(idStr string, newPassword string) error
+	CountUsers() (int64, error)
 }
 
 type IUserController interface {

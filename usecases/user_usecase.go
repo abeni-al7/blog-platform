@@ -53,6 +53,16 @@ func (uu *UserUsecase) Register(user *domain.User) (domain.User, error) {
 	if err == nil {
 		return domain.User{}, errors.New("this email is already in use")
 	}
+	userCount, err := uu.userRepo.CountUsers()
+	if err != nil {
+		return domain.User{}, errors.New("unable to check existing users")
+	}
+
+	if userCount == 0 {
+		user.Role = "admin"
+	} else {
+		user.Role = "user"
+	}
 
 	user.Status = "inactive"
 	user.Password, err = uu.passwordService.HashPassword(user.Password)
