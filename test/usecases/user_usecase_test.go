@@ -47,6 +47,7 @@ func (suite *UserUsecaseTestSuite) TestRegister_Success() {
 
 	suite.userRepo.On("FetchByUsername", user.Username).Return(domain.User{}, errors.New("not found"))
 	suite.userRepo.On("FetchByEmail", user.Email).Return(domain.User{}, errors.New("not found"))
+	suite.userRepo.On("CountUsers").Return(int64(1), nil)
 	suite.pwdService.On("HashPassword", user.Password).Return("hashedpassword", nil)
 	suite.userRepo.On("Register", mock.AnythingOfType("*domain.User")).Return(createdUser, nil)
 	suite.emailService.On("SendEmail", []string{user.Email}, "Activate Account", "http://localhost:8080/user/1/activate").Return(nil)
@@ -117,6 +118,7 @@ func (suite *UserUsecaseTestSuite) TestRegister_RegistrationFails_HashError() {
 	}
 	suite.userRepo.On("FetchByUsername", user.Username).Return(domain.User{}, errors.New("not found"))
 	suite.userRepo.On("FetchByEmail", user.Email).Return(domain.User{}, errors.New("not found"))
+	suite.userRepo.On("CountUsers").Return(int64(1), nil)
 	suite.pwdService.On("HashPassword", user.Password).Return("", errors.New("hash error"))
 
 	_, err := suite.userUsecase.Register(user)
@@ -131,6 +133,7 @@ func (suite *UserUsecaseTestSuite) TestRegister_RegistrationFails_RepoError() {
 	}
 	suite.userRepo.On("FetchByUsername", user.Username).Return(domain.User{}, errors.New("not found"))
 	suite.userRepo.On("FetchByEmail", user.Email).Return(domain.User{}, errors.New("not found"))
+	suite.userRepo.On("CountUsers").Return(int64(1), nil)
 	suite.pwdService.On("HashPassword", user.Password).Return("hashedpassword", nil)
 	suite.userRepo.On("Register", mock.AnythingOfType("*domain.User")).Return(domain.User{}, errors.New("db error"))
 
@@ -150,6 +153,7 @@ func (suite *UserUsecaseTestSuite) TestRegister_SendEmailFails() {
 
 	suite.userRepo.On("FetchByUsername", user.Username).Return(domain.User{}, errors.New("not found"))
 	suite.userRepo.On("FetchByEmail", user.Email).Return(domain.User{}, errors.New("not found"))
+	suite.userRepo.On("CountUsers").Return(int64(1), nil)
 	suite.pwdService.On("HashPassword", user.Password).Return("hashedpassword", nil)
 	suite.userRepo.On("Register", mock.AnythingOfType("*domain.User")).Return(createdUser, nil)
 	suite.emailService.On("SendEmail", []string{user.Email}, "Activate Account", "http://localhost:8080/user/1/activate").Return(errors.New("email error"))

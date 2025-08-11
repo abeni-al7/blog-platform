@@ -1,4 +1,4 @@
-package repositories
+package test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/blog-platform/domain"
+	"github.com/blog-platform/repositories"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/driver/postgres"
@@ -36,19 +37,28 @@ func (suite *BlogRepoTestSuite) SetupTest() {
 
 	suite.db = gormDB
 	suite.mock = mock
-	suite.repo = NewBlogRepository(gormDB)
+	suite.repo = repositories.NewBlogRepository(gormDB)
 }
 
 func (suite *BlogRepoTestSuite) TestCreateBlog() {
 	blog := &domain.Blog{
 		Title:   "Test Blog",
 		Content: "This is a test blog content.",
-		ID:      1,
+		UserID:  1,
 	}
 	suite.mock.ExpectBegin()
-	suite.mock.ExpectExec(`INSERT INTO "blogs"`).
-		WithArgs(blog.Title, blog.Content, blog.ID, blog.UserID).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	// GORM will insert all fields, so use AnyArg for those you don't care about
+	suite.mock.ExpectQuery(`INSERT INTO "blogs"`).
+		WithArgs(
+			blog.Title,
+			blog.Content,
+			blog.ViewCount,
+			blog.Likes,
+			blog.Dislikes,
+			blog.UserID,
+			sqlmock.AnyArg(), // created_at
+			sqlmock.AnyArg(), // updated_at
+		).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 	suite.mock.ExpectCommit()
 
 	err := suite.repo.Create(context.Background(), blog)
@@ -57,8 +67,8 @@ func (suite *BlogRepoTestSuite) TestCreateBlog() {
 }
 func (suite *BlogRepoTestSuite) TestDeleteByID() {
 	suite.mock.ExpectBegin()
-	suite.mock.ExpectExec(`UPDATE "blogs" SET "deleted_at"=`).
-		WithArgs(sqlmock.AnyArg(), 1, "user123").
+	suite.mock.ExpectExec(`DELETE FROM "blogs" WHERE id = \$1 AND user_id = \$2`).
+		WithArgs(1, "user123").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	suite.mock.ExpectCommit()
 

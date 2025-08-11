@@ -1,4 +1,4 @@
-package usecases
+package test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/blog-platform/domain"
 	"github.com/blog-platform/mock"
+	"github.com/blog-platform/usecases"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -29,7 +30,7 @@ type BlogUsecaseTestSuite struct {
 func (suite *BlogUsecaseTestSuite) SetupTest() {
 	suite.mockRepo = new(mock.MockBlogRepo)
 	suite.mockAI = &MockAIService{}
-	suite.usecase = NewBlogUsecase(suite.mockRepo, suite.mockAI)
+	suite.usecase = usecases.NewBlogUsecase(suite.mockRepo, suite.mockAI)
 }
 
 func (suite *BlogUsecaseTestSuite) TestCreateBlog_Success() {
