@@ -19,3 +19,10 @@ type Blog struct {
 	CreatedAt time.Time `json:"created_at"`                                     // auto set on insert
 	UpdatedAt time.Time `json:"updated_at"`                                     // auto set on update
 }
+
+type BlogFilter struct {
+	TitleContains string
+	UserID        *int64
+	Limit         int
+	Offset        int
+}

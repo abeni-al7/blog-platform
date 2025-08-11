@@ -66,6 +66,32 @@ func (suite *BlogUsecaseTestSuite) TestCreateBlogError() {
 	assert.EqualError(suite.T(), err, "failed to create blog")
 	suite.mockRepo.AssertExpectations(suite.T())
 }
+func (suite *BlogUsecaseTestSuite) TestFetchBlogsByFilter_Success() {
+	ctx := context.Background()
+	filter := domain.BlogFilter{TitleContains: "Test"}
+	expectedBlogs := []*domain.Blog{
+		{ID: 1, Title: "Test Blog", Content: "Content"},
+	}
+
+	suite.mockRepo.On("FetchByFilter", ctx, filter).Return(expectedBlogs, nil)
+
+	blogs, err := suite.usecase.FetchBlogsByFilter(ctx, filter)
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), expectedBlogs, blogs)
+	suite.mockRepo.AssertExpectations(suite.T())
+}
+
+func (suite *BlogUsecaseTestSuite) TestFetchBlogsByFilter_Error() {
+	ctx := context.Background()
+	filter := domain.BlogFilter{TitleContains: "Fail"}
+
+	suite.mockRepo.On("FetchByFilter", ctx, filter).Return([]*domain.Blog(nil), assert.AnError)
+
+	blogs, err := suite.usecase.FetchBlogsByFilter(ctx, filter)
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), blogs)
+	suite.mockRepo.AssertExpectations(suite.T())
+}
 
 func TestBlogUsecaseTestSuite(t *testing.T) {
 	suite.Run(t, new(BlogUsecaseTestSuite))

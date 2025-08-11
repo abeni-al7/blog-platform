@@ -49,3 +49,8 @@ func (m *MockBlogRepo) FetchPaginatedBlogs(ctx context.Context, page, limit int)
 	return args.Get(0).([]*domain.Blog), args.Get(1).(int64), args.Error(2)
 
 }
+
+func (m *MockBlogRepo) FetchByFilter(ctx context.Context, filter domain.BlogFilter) ([]*domain.Blog, error) {
+	args := m.Called(ctx, filter)
+	return args.Get(0).([]*domain.Blog), args.Error(1)
+}
