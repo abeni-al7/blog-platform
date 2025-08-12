@@ -222,7 +222,49 @@ Responses:
 - Popularity: GET /blogs/1/popularity → `{ "view_count": 12, "likes": 3 }`
 
 ---
+### Filter Blogs
 
+Filter blogs using query parameters. All fields are optional unless stated otherwise.
+
+- Endpoint: GET /blogs/filter
+- Auth: Yes (Authorization: Bearer <token>)
+- Query parameters:
+  - title: string (optional, substring match on title)
+  - user_id: int64 (optional, filter by author)
+  - limit: int (optional, default 10, min 1)
+  - offset: int (optional, default 0, min 0)
+
+Example request (filter by title contains "go"):
+
+GET /blogs/filter?title=go&limit=5&offset=0
+
+Example 200 response:
+```json
+[
+  {
+    "id": 42,
+    "title": "Go Concurrency Patterns",
+    "content": "…",
+    "user_id": 123,
+    "tags": [
+      { "id": 1, "name": "go" },
+      { "id": 2, "name": "concurrency" }
+    ],
+    "created_at": "2025-08-11T10:00:00Z",
+    "updated_at": "2025-08-11T10:00:00Z"
+  }
+]
+```
+Example request (filter by user):
+
+GET /blogs/filter?user_id=123&limit=10&offset=0
+
+Example 400 response (invalid user_id):
+```json
+{ "error": "invalid user_id" }
+```
+
+---
 ### Comments
 
 | Method | URL                   | Auth | Description                         |
@@ -368,53 +410,6 @@ go test ./test/repositories -v
 
 ---
 
-## Setup and Deployment
-
-### Prerequisites
-- Go 1.20+
-- PostgreSQL
-
-### Environment Variables
-Create a `.env` file:
-```
-DB_HOST=localhost
-DB_USER=postgres
-DB_PASSWORD=yourpassword
-DB_NAME=blogdb
-DB_PORT=5432
-JWT_ACCESS_SECRET=youraccesssecret
-JWT_REFRESH_SECRET=yourrefreshsecret
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USERNAME=your@email.com
-SMTP_PASSWORD=yourpassword
-SMTP_FROM=your@email.com
-PROTOCOL=http
-DOMAIN=localhost
-PORT=8080
-OPENAI_API_KEY=your_openai_api_key_optional
-```
-
-### Running Locally
-1. Clone the repo and install dependencies
-2. Set up PostgreSQL and `.env`
-3. Run migrations (auto-migrated on start)
-4. Start server:
-   ```sh
-   go run delivery/main.go
-   ```
-
-Login and use the API:
-1. Register: POST /register
-2. Login: POST /login → copy `access` token
-3. Call protected routes with header `Authorization: Bearer <access>`
-
-### Deployment
-- Build: `go build -o blog-platform delivery/main.go`
-- Deploy binary and `.env` to server
-
----
-
 ## Security Considerations
 
 - Passwords hashed with bcrypt
@@ -435,43 +430,3 @@ Login and use the API:
 
 ---
 
-### Filter Blogs
-
-Filter blogs using query parameters. All fields are optional unless stated otherwise.
-
-- Endpoint: GET /blogs/filter
-- Auth: Yes (Authorization: Bearer <token>)
-- Query parameters:
-  - title: string (optional, substring match on title)
-  - user_id: int64 (optional, filter by author)
-  - limit: int (optional, default 10, min 1)
-  - offset: int (optional, default 0, min 0)
-
-Example request (filter by title contains "go"):
-
-GET /blogs/filter?title=go&limit=5&offset=0
-
-Example 200 response:
-[
-  {
-    "id": 42,
-    "title": "Go Concurrency Patterns",
-    "content": "…",
-    "user_id": 123,
-    "tags": [
-      { "id": 1, "name": "go" },
-      { "id": 2, "name": "concurrency" }
-    ],
-    "created_at": "2025-08-11T10:00:00Z",
-    "updated_at": "2025-08-11T10:00:00Z"
-  }
-]
-
-Example request (filter by user):
-
-GET /blogs/filter?user_id=123&limit=10&offset=0
-
-Example 400 response (invalid user_id):
-{ "error": "invalid user_id" }
-
----
