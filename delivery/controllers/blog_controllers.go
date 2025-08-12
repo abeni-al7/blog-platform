@@ -173,3 +173,28 @@ func (c *BlogController) SuggestBlogImprovements(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"suggestion": suggestion})
 
 }
+
+func (bc *BlogController) UpdateBlog(c *gin.Context) {
+	var blog domain.Blog
+	if err := c.ShouldBindJSON(&blog); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	idParam := c.Param("id")
+	id, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid blog id"})
+		return
+	}
+	blog.ID = id
+
+	tags := c.QueryArray("tags")
+
+	if err := bc.blogUsecase.UpdateBlog(c.Request.Context(), &blog, tags); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "blog updated successfully"})
+}

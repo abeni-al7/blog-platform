@@ -96,3 +96,48 @@ func (r *BlogRepository) FetchPaginatedBlogs(ctx context.Context, page, limit in
 	return blogs, total, nil
 
 }
+
+func (r *BlogRepository) Update(ctx context.Context, blog *domain.Blog, tags []string) error {
+	tx := r.db.Begin()
+
+	if err := tx.WithContext(ctx).
+		Model(&domain.Blog{}).
+		Where("id = ?", blog.ID).
+		Updates(map[string]interface{}{
+			"title":   blog.Title,
+			"content": blog.Content,
+		}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := tx.WithContext(ctx).
+		Where("blog_id = ?", blog.ID).
+		Delete(&domain.Tag_Blog{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	for _, tagName := range tags {
+		if tagName == "" {
+			continue
+		}
+
+		tagID, err := r.FindOrCreateTag(ctx, tagName)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+
+		tagBlog := domain.Tag_Blog{
+			BlogID: blog.ID,
+			TagID:  tagID,
+		}
+
+		if err := tx.WithContext(ctx).Create(&tagBlog).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return tx.Commit().Error
+}

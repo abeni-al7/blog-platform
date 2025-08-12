@@ -97,3 +97,14 @@ func (uc *blogUsecase) FetchPaginatedBlogs(ctx context.Context, page, limit int)
 	return uc.blogRepo.FetchPaginatedBlogs(ctx, page, limit)
 
 }
+
+func (u *blogUsecase) UpdateBlog(ctx context.Context, blog *domain.Blog, tags []string) error { // NEW
+	existing, err := u.blogRepo.FetchByID(ctx, blog.ID)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		return fmt.Errorf("blog not found")
+	}
+	return u.blogRepo.Update(ctx, blog, tags)
+}

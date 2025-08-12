@@ -49,3 +49,8 @@ func (m *MockBlogRepo) FetchPaginatedBlogs(ctx context.Context, page, limit int)
 	return args.Get(0).([]*domain.Blog), args.Get(1).(int64), args.Error(2)
 
 }
+
+func (m *MockBlogRepo) Update(ctx context.Context, blog *domain.Blog, tags []string) error {
+	args := m.Called(ctx, blog, tags)
+	return args.Error(0)
+}

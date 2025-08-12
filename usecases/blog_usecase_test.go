@@ -66,6 +66,45 @@ func (suite *BlogUsecaseTestSuite) TestCreateBlogError() {
 	assert.EqualError(suite.T(), err, "failed to create blog")
 	suite.mockRepo.AssertExpectations(suite.T())
 }
+func (suite *BlogUsecaseTestSuite) TestUpdateBlog_Success() {
+	ctx := context.Background()
+	blog := &domain.Blog{
+		ID:      1,
+		Title:   "Updated Title",
+		Content: "Updated content",
+		UserID:  123,
+	}
+
+	tags := []string{"go", "programming"}
+	// Expect FetchByID call to verify blog exists (optional but good practice)
+	suite.mockRepo.On("FetchByID", ctx, blog.ID).Return(blog, nil)
+	suite.mockRepo.On("Update", ctx, blog, tags).Return(nil)
+
+	// For tags, mock FindOrCreateTag and LinkTagToBlog calls accordingly
+	suite.mockRepo.On("FindOrCreateTag", ctx, "go").Return(int64(1), nil)
+	suite.mockRepo.On("LinkTagToBlog", ctx, blog.ID, int64(1)).Return(nil)
+	suite.mockRepo.On("FindOrCreateTag", ctx, "programming").Return(int64(2), nil)
+	suite.mockRepo.On("LinkTagToBlog", ctx, blog.ID, int64(2)).Return(nil)
+
+	err := suite.usecase.UpdateBlog(ctx, blog, tags)
+	assert.NoError(suite.T(), err)
+	suite.mockRepo.AssertExpectations(suite.T())
+}
+
+func (suite *BlogUsecaseTestSuite) TestUpdateBlog_NotFound() {
+	ctx := context.Background()
+	blog := &domain.Blog{
+		ID:      99,
+		Title:   "Nonexistent",
+		Content: "Content",
+		UserID:  123,
+	}
+
+	suite.mockRepo.On("FetchByID", ctx, blog.ID).Return(nil, assert.AnError)
+	err := suite.usecase.UpdateBlog(ctx, blog, []string{})
+	assert.Error(suite.T(), err)
+	suite.mockRepo.AssertExpectations(suite.T())
+}
 
 func TestBlogUsecaseTestSuite(t *testing.T) {
 	suite.Run(t, new(BlogUsecaseTestSuite))

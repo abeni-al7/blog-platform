@@ -12,13 +12,12 @@ type IBlogRepository interface {
 	FetchAll(ctx context.Context) ([]*Blog, error)
 	DeleteByID(ctx context.Context, ID int64, userID string) error
 	FetchPaginatedBlogs(ctx context.Context, page int, limit int) ([]*Blog, int64, error)
-
+	Update(ctx context.Context, blog *Blog, tags []string) error
 }
 
 type IAIService interface {
 	GenerateBlogIdeas(topic string) (string, error)
 	SuggestBlogImprovements(content string) (string, error)
-
 }
 
 type IBlogUsecase interface {
@@ -27,9 +26,9 @@ type IBlogUsecase interface {
 	FetchAllBlogs(ctx context.Context) ([]*Blog, error)
 	DeleteBlog(ctx context.Context, ID int64, userID string) error
 	FetchPaginatedBlogs(ctx context.Context, page int, limit int) ([]*Blog, int64, error)
-  GenerateBlogIdeas(topic string) (string, error)
+	GenerateBlogIdeas(topic string) (string, error)
 	SuggestBlogImprovements(content string) (string, error)
-
+	UpdateBlog(ctx context.Context, blog *Blog, tags []string) error
 }
 
 type IJWTInfrastructure interface {
