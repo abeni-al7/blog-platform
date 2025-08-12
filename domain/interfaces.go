@@ -19,6 +19,9 @@ type IBlogRepository interface {
 	DeleteByID(ctx context.Context, ID int64, userID string) error
 	UpdateByID(ctx context.Context, id int64, userID string, updates map[string]interface{}) error
 	FetchByFilter(ctx context.Context, filter BlogFilter) ([]*Blog, error)
+	// comments
+	AddComment(ctx context.Context, blogID, userID int64, content string) (*Comment, error)
+	ListComments(ctx context.Context, blogID int64, page, limit int) ([]*Comment, int64, error)
 }
 
 type IAIService interface {
@@ -41,6 +44,9 @@ type IBlogUsecase interface {
 	SuggestBlogImprovements(content string) (string, error)
 	UpdateBlog(ctx context.Context, id int64, userID string, updates map[string]interface{}) error
 	FetchBlogsByFilter(ctx context.Context, filter BlogFilter) ([]*Blog, error)
+	// comments
+	AddComment(ctx context.Context, blogID, userID int64, content string) (*Comment, error)
+	GetComments(ctx context.Context, blogID int64, page, limit int) ([]*Comment, int64, error)
 }
 
 type IJWTInfrastructure interface {

@@ -171,3 +171,26 @@ func (uc *blogUsecase) SearchBlogs(ctx context.Context, query string, page, limi
 	}
 	return uc.blogRepo.SearchBlogs(ctx, query, page, limit)
 }
+
+func (uc *blogUsecase) AddComment(ctx context.Context, blogID, userID int64, content string) (*domain.Comment, error) {
+	if blogID <= 0 || userID <= 0 {
+		return nil, errors.New("invalid blog or user id")
+	}
+	if strings.TrimSpace(content) == "" {
+		return nil, errors.New("content is required")
+	}
+	return uc.blogRepo.AddComment(ctx, blogID, userID, content)
+}
+
+func (uc *blogUsecase) GetComments(ctx context.Context, blogID int64, page, limit int) ([]*domain.Comment, int64, error) {
+	if blogID <= 0 {
+		return nil, 0, errors.New("invalid blog id")
+	}
+	if page < 1 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+	return uc.blogRepo.ListComments(ctx, blogID, page, limit)
+}

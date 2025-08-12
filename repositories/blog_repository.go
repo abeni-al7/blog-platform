@@ -258,3 +258,64 @@ func (r *BlogRepository) SearchBlogs(ctx context.Context, query string, page, li
 	return blogs, total, nil
 
 }
+
+func (r *BlogRepository) AddComment(ctx context.Context, blogID, userID int64, content string) (*domain.Comment, error) {
+	c := &domain.Comment{
+		BlogID:  blogID,
+		UserID:  userID,
+		Content: content,
+	}
+
+	// Create the comment
+	if err := r.db.WithContext(ctx).Create(c).Error; err != nil {
+		return nil, err
+	}
+
+	// Reload with associations
+	if err := r.db.WithContext(ctx).
+		Preload("User").
+		Preload("Blog").
+		Preload("Blog.User").
+		First(c, c.ID).Error; err != nil {
+		return nil, err
+	}
+
+	return c, nil
+}
+
+func (r *BlogRepository) ListComments(ctx context.Context, blogID int64, page, limit int) ([]*domain.Comment, int64, error) {
+	var (
+		comments []*domain.Comment
+		total    int64
+	)
+
+	q := r.db.WithContext(ctx).Model(&domain.Comment{}).Where("blog_id = ?", blogID)
+
+	// Count total
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if page < 1 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+
+	offset := (page - 1) * limit
+
+	// Fetch with preloaded associations
+	if err := q.
+		Preload("User").
+		Preload("Blog").
+		Preload("Blog.User").
+		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&comments).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return comments, total, nil
+}
