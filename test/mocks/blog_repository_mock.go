@@ -83,3 +83,16 @@ func (m *MockBlogRepo) FetchByFilter(ctx context.Context, filter domain.BlogFilt
 	args := m.Called(ctx, filter)
 	return args.Get(0).([]*domain.Blog), args.Error(1)
 }
+
+func (m *MockBlogRepo) AddComment(ctx context.Context, blogID int64, userID int64, content string) (*domain.Comment, error) {
+	args := m.Called(ctx, blogID, userID, content)
+	if c, ok := args.Get(0).(*domain.Comment); ok {
+		return c, args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
+func (m *MockBlogRepo) ListComments(ctx context.Context, blogID int64, page int, limit int) ([]*domain.Comment, int64, error) {
+	args := m.Called(ctx, blogID, page, limit)
+	return args.Get(0).([]*domain.Comment), args.Get(1).(int64), args.Error(2)
+}

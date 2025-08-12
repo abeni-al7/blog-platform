@@ -350,3 +350,60 @@ func (bc *BlogController) FilterBlogs(c *gin.Context) {
 
 	c.JSON(http.StatusOK, blogs)
 }
+
+// Comments
+type AddCommentRequest struct {
+	Content string `json:"content" binding:"required"`
+}
+
+func (c *BlogController) AddComment(ctx *gin.Context) {
+	userIDVal, exists := ctx.Get("user_id")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userID := userIDVal.(int64)
+	blogID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil || blogID <= 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid blog id"})
+		return
+	}
+	var req AddCommentRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	comment, err := c.blogUsecase.AddComment(ctx.Request.Context(), blogID, userID, req.Content)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{"comment": comment})
+}
+
+func (c *BlogController) ListComments(ctx *gin.Context) {
+	blogID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil || blogID <= 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid blog id"})
+		return
+	}
+	pageStr := ctx.DefaultQuery("page", "1")
+	limitStr := ctx.DefaultQuery("limit", "10")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid page"})
+		return
+	}
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid limit"})
+		return
+	}
+	comments, total, err := c.blogUsecase.GetComments(ctx.Request.Context(), blogID, page, limit)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"comments": comments, "meta": gin.H{"total": total, "page": page, "limit": limit}})
+}

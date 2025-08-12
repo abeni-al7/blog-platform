@@ -38,6 +38,9 @@ func BlogRoutes(router *gin.RouterGroup) {
 		blogRoutes.POST("/ideas", bc.GenerateBlogIdeas)
 		blogRoutes.POST("/improve", bc.SuggestBlogImprovements)
 		blogRoutes.GET("/filter", bc.FilterBlogs)
+		// comments
+		blogRoutes.POST("/:id/comments", bc.AddComment)
+		blogRoutes.GET("/:id/comments", bc.ListComments)
 	}
 
 }
