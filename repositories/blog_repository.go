@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/blog-platform/domain"
@@ -185,4 +186,75 @@ func (r *BlogRepository) FetchByFilter(ctx context.Context, filter domain.BlogFi
 	}
 
 	return blogs, nil
+}
+
+func (r *BlogRepository) IncrementView(ctx context.Context, blogID int64) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.Blog{}).
+		Where("id = ?", blogID).
+		UpdateColumn("view_count", gorm.Expr("view_count + 1")).Error
+}
+
+func (r *BlogRepository) AddLike(ctx context.Context, blogID int64, _ int64) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.Blog{}).
+		Where("id = ?", blogID).
+		UpdateColumn("likes", gorm.Expr("likes + 1")).Error
+}
+
+func (r *BlogRepository) RemoveLike(ctx context.Context, blogID int64, _ int64) error {
+	// Portable clamp to zero
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var b domain.Blog
+		if err := tx.Select("id, likes").First(&b, blogID).Error; err != nil {
+			return err
+		}
+		if b.Likes > 0 {
+			b.Likes--
+		}
+		return tx.Model(&domain.Blog{}).Where("id = ?", blogID).Update("likes", b.Likes).Error
+	})
+}
+
+func (r *BlogRepository) GetPopularity(ctx context.Context, blogID int64) (int, int, error) {
+	var b domain.Blog
+	if err := r.db.WithContext(ctx).Select("id, view_count, likes").First(&b, blogID).Error; err != nil {
+		return 0, 0, err
+	}
+	return b.ViewCount, b.Likes, nil
+}
+
+func (r *BlogRepository) SearchBlogs(ctx context.Context, query string, page, limit int) ([]*domain.Blog, int64, error) {
+	var (
+		blogs []*domain.Blog
+		total int64
+	)
+
+	q := strings.TrimSpace(query)
+	if q == "" {
+		return []*domain.Blog{}, 0, nil
+	}
+	pattern := "%" + strings.ToLower(q) + "%"
+
+	db := r.db.WithContext(ctx).Model(&domain.Blog{}).
+		Where("LOWER(title) LIKE ? OR LOWER(content) LIKE ?", pattern, pattern)
+
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if page < 1 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
+
+	if err := db.Order("created_at DESC").Limit(limit).Offset(offset).Find(&blogs).Error; err != nil {
+		return nil, 0, err
+	}
+	// r.c.Set(key, &pagedBlogs{Blogs: blogs, Total: total}, 1*time.Minute)
+	return blogs, total, nil
+
 }

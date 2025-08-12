@@ -10,8 +10,13 @@ type IBlogRepository interface {
 	LinkTagToBlog(ctx context.Context, blogID int64, tagID int64) error
 	FetchByID(ctx context.Context, id int64) (*Blog, error)
 	FetchAll(ctx context.Context) ([]*Blog, error)
-	DeleteByID(ctx context.Context, ID int64, userID string) error
+	IncrementView(ctx context.Context, blogID int64) error
+	AddLike(ctx context.Context, blogID int64, userID int64) error // userID optional, ignored
+	RemoveLike(ctx context.Context, blogID int64, userID int64) error
+	GetPopularity(ctx context.Context, blogID int64) (views int, likes int, err error)
+	SearchBlogs(ctx context.Context, query string, page, limit int) ([]*Blog, int64, error)
 	FetchPaginatedBlogs(ctx context.Context, page int, limit int) ([]*Blog, int64, error)
+	DeleteByID(ctx context.Context, ID int64, userID string) error
 	UpdateByID(ctx context.Context, id int64, userID string, updates map[string]interface{}) error
 	FetchByFilter(ctx context.Context, filter BlogFilter) ([]*Blog, error)
 }
@@ -27,6 +32,11 @@ type IBlogUsecase interface {
 	FetchAllBlogs(ctx context.Context) ([]*Blog, error)
 	DeleteBlog(ctx context.Context, ID int64, userID string) error
 	FetchPaginatedBlogs(ctx context.Context, page int, limit int) ([]*Blog, int64, error)
+	TrackView(ctx context.Context, blogID int64) error
+	LikeBlog(ctx context.Context, blogID, userID int64) error
+	UnlikeBlog(ctx context.Context, blogID, userID int64) error
+	GetPopularity(ctx context.Context, blogID int64) (views int, likes int, err error)
+	SearchBlogs(ctx context.Context, query string, page, limit int) ([]*Blog, int64, error)
 	GenerateBlogIdeas(topic string) (string, error)
 	SuggestBlogImprovements(content string) (string, error)
 	UpdateBlog(ctx context.Context, id int64, userID string, updates map[string]interface{}) error
