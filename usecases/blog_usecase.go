@@ -95,6 +95,7 @@ func (uc *blogUsecase) GetAIService() domain.IAIService {
 }
 func (uc *blogUsecase) FetchPaginatedBlogs(ctx context.Context, page, limit int) ([]*domain.Blog, int64, error) {
 	return uc.blogRepo.FetchPaginatedBlogs(ctx, page, limit)
+	// Minor comment to trigger CI re-run
 
 }
 
