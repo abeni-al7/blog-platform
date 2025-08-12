@@ -10,6 +10,29 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// helper: extract authenticated user ID from context
+func getUserIDFromContext(ctx *gin.Context) (int64, bool) {
+	// common keys set by auth middleware
+	candidates := []string{"userID", "user_id", "uid"}
+	for _, k := range candidates {
+		if v, ok := ctx.Get(k); ok {
+			switch t := v.(type) {
+			case int64:
+				return t, true
+			case int:
+				return int64(t), true
+			case float64:
+				return int64(t), true
+			case string:
+				if id, err := strconv.ParseInt(t, 10, 64); err == nil {
+					return id, true
+				}
+			}
+		}
+	}
+	return 0, false
+}
+
 type BlogController struct {
 	blogUsecase domain.IBlogUsecase
 }
