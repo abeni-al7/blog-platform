@@ -9,19 +9,25 @@ import (
 )
 
 type blogUsecase struct {
-	blogRepo domain.IBlogRepository
+	blogRepo  domain.IBlogRepository
+	aiService domain.IAIService
 }
 
-func NewBlogUsecase(repo domain.IBlogRepository) domain.IBlogUsecase {
+func NewBlogUsecase(repo domain.IBlogRepository, aiService domain.IAIService) domain.IBlogUsecase {
 	return &blogUsecase{
-		blogRepo: repo,
+		blogRepo:  repo,
+		aiService: aiService,
 	}
 }
 
 func (uc blogUsecase) CreateBlog(ctx context.Context, blog *domain.Blog, tags []string) error {
 	// prevent empty strings from being added
+
 	if blog.Title == "" || blog.Content == "" {
 		return errors.New("title and content cannot be empty")
+	}
+	if blog.UserID == 0 {
+		return errors.New("userID cannot be zero")
 	}
 
 	err := uc.blogRepo.Create(ctx, blog)
@@ -29,7 +35,6 @@ func (uc blogUsecase) CreateBlog(ctx context.Context, blog *domain.Blog, tags []
 	if err != nil {
 		return errors.New("failed to create blog")
 	}
-	// Ensure blog ID is populated after creation
 	if blog.ID == 0 {
 		return errors.New("blog ID not set after creation")
 	}
@@ -74,8 +79,55 @@ func (uc *blogUsecase) FetchAllBlogs(ctx context.Context) ([]*domain.Blog, error
 	return blogs, nil
 }
 
+func (u *blogUsecase) DeleteBlog(ctx context.Context, ID int64, userID string) error {
+	return u.blogRepo.DeleteByID(ctx, ID, userID)
+}
+
+func (uc *blogUsecase) UpdateBlog(ctx context.Context, id int64, userID string, updates map[string]interface{}) error {
+	if id <= 0 {
+		return errors.New("invalid blog ID")
+	}
+	// allow only certain fields
+	allowed := map[string]bool{
+		"Title":   true,
+		"Content": true,
+	}
+	filtered := make(map[string]interface{})
+	for k, v := range updates {
+		if allowed[k] {
+			// simple validation
+			if k == "Title" && v == "" {
+				return errors.New("title cannot be empty")
+			}
+			if k == "Content" && v == "" {
+				return errors.New("content cannot be empty")
+			}
+			filtered[k] = v
+		}
+	}
+	if len(filtered) == 0 {
+		return nil
+	}
+	return uc.blogRepo.UpdateByID(ctx, id, userID, filtered)
+}
+
+func (uc *blogUsecase) GenerateBlogIdeas(topic string) (string, error) {
+	return uc.aiService.GenerateBlogIdeas(topic)
+}
+
+func (uc *blogUsecase) SuggestBlogImprovements(content string) (string, error) {
+	return uc.aiService.SuggestBlogImprovements(content)
+}
+func (uc *blogUsecase) GetAIService() domain.IAIService {
+	return uc.aiService
+}
 func (uc *blogUsecase) FetchPaginatedBlogs(ctx context.Context, page, limit int) ([]*domain.Blog, int64, error) {
 	return uc.blogRepo.FetchPaginatedBlogs(ctx, page, limit)
+
+}
+
+func (uc *blogUsecase) FetchBlogsByFilter(ctx context.Context, filter domain.BlogFilter) ([]*domain.Blog, error) {
+	return uc.blogRepo.FetchByFilter(ctx, filter)
 }
 
 func (uc *blogUsecase) TrackView(ctx context.Context, blogID int64) error {

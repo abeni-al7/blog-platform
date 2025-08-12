@@ -1,4 +1,4 @@
-package mock
+package mocks
 
 import (
 	"context"
@@ -62,4 +62,19 @@ func (m *MockBlogRepo) RemoveLike(ctx context.Context, blogID int64, userID int6
 func (m *MockBlogRepo) GetPopularity(ctx context.Context, blogID int64) (int, int, error) {
 	args := m.Called(ctx, blogID)
 	return args.Int(0), args.Int(1), args.Error(2)
+}
+
+func (m *MockBlogRepo) DeleteByID(ctx context.Context, ID int64, userID string) error {
+	args := m.Called(ctx, ID, userID)
+	return args.Error(0)
+}
+
+func (m *MockBlogRepo) UpdateByID(ctx context.Context, id int64, userID string, updates map[string]interface{}) error {
+	args := m.Called(ctx, id, userID, updates)
+	return args.Error(0)
+}
+
+func (m *MockBlogRepo) FetchByFilter(ctx context.Context, filter domain.BlogFilter) ([]*domain.Blog, error) {
+	args := m.Called(ctx, filter)
+	return args.Get(0).([]*domain.Blog), args.Error(1)
 }

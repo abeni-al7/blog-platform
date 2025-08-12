@@ -1,21 +1,42 @@
 package routers
 
 import (
+	"os"
+
 	"github.com/blog-platform/delivery/controllers"
+	"github.com/blog-platform/infrastructure"
+	"github.com/blog-platform/repositories"
+	"github.com/blog-platform/usecases"
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterBlogRoutes(router *gin.Engine, blogController *controllers.BlogController) {
-	router.POST("/blogs", blogController.CreateBlog)
+func BlogRoutes(router *gin.RouterGroup) {
 
-	router.GET("/blogs/:id", blogController.GetBlogByID)
+	DB := repositories.DB
+	ur := repositories.NewBlogRepository(DB)
+	tr := repositories.NewTokenRepository(DB)
+	js := infrastructure.NewJWTInfrastructure([]byte(os.Getenv("JWT_ACCESS_SECRET")), []byte(os.Getenv("JWT_REFRESH_SECRET")), tr)
+	ao := infrastructure.NewMiddleware(js)
+	ai := infrastructure.NewChatGPTAIService()
+	uu := usecases.NewBlogUsecase(ur, ai)
+	bc := controllers.NewBlogController(uu)
 
-	router.GET("/blogs", blogController.GetBlogs)
+	blogRoutes := router.Group("/blogs")
+	blogRoutes.Use(ao.AuthMiddleware())
+	{
+		blogRoutes.POST("", bc.CreateBlog)
+		blogRoutes.GET("/:id", bc.GetBlogByID)
+		blogRoutes.GET("", bc.GetBlogs)
+		blogRoutes.DELETE("/:id", bc.DeleteBlog)
+		blogRoutes.PATCH("/:id", bc.UpdateBlog)
+		blogRoutes.GET("/paginated", bc.FetchPaginatedBlogs)
+		blogRoutes.POST("/ideas", bc.GenerateBlogIdeas)
+		blogRoutes.POST("/improve", bc.SuggestBlogImprovements)
+		blogRoutes.GET("/filter", bc.FilterBlogs)
+	}
 
-	router.GET("/blogs/paginated", blogController.FetchPaginatedBlogs)
-
-	router.POST("/blogs/:id/view", blogController.TrackView)
-	router.POST("/blogs/:id/like", blogController.LikeBlog)
-	router.DELETE("/blogs/:id/like", blogController.UnlikeBlog)
-	router.GET("/blogs/:id/popularity", blogController.GetPopularity)
+	router.POST("/blogs/:id/view", bc.TrackView)
+	router.POST("/blogs/:id/like", bc.LikeBlog)
+	router.DELETE("/blogs/:id/like", bc.UnlikeBlog)
+	router.GET("/blogs/:id/popularity", bc.GetPopularity)
 }

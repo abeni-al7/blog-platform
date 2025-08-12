@@ -51,8 +51,11 @@ func (ur *UserRepository) ActivateAccount(idStr string) error {
 	}
 
 	result := ur.DB.Model(&domain.User{}).Where("id = ?", id).Update("status", "active")
-	if result.Error != nil || result.RowsAffected == 0 {
+	if result.Error != nil {
 		return errors.New(result.Error.Error())
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("no rows affected")
 	}
 
 	return nil
@@ -149,4 +152,13 @@ func (ur *UserRepository) ResetPassword(idStr string, newPassword string) error 
 	}
 
 	return nil
+}
+
+func (ur *UserRepository) CountUsers() (int64, error) {
+	var count int64
+	err := ur.DB.Model(&domain.User{}).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

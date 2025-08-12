@@ -2,12 +2,11 @@ package domain
 
 import (
 	"time"
-
-	"gorm.io/gorm"
+	//"gorm.io/gorm"
 )
 
 type Blog struct {
-	gorm.Model
+	//gorm.Model
 	ID        int64     `gorm:"primaryKey;autoIncrement" json:"id"`
 	Title     string    `gorm:"type:varchar(500)" json:"title"`
 	Content   string    `json:"content"`
@@ -16,6 +15,14 @@ type Blog struct {
 	Dislikes  int       `json:"dislikes"`
 	UserID    int64     `json:"user_id"`                                        // Foreign key column
 	User      User      `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"` // GORM relation
-	CreatedAt time.Time `json:"created_at"`                                     // auto set on insert
-	UpdatedAt time.Time `json:"updated_at"`                                     // auto set on update
+	Tags      []Tag     `gorm:"many2many:tag_blogs;" json:"tags"`
+	CreatedAt time.Time `json:"created_at"` // auto set on insert
+	UpdatedAt time.Time `json:"updated_at"` // auto set on update
+}
+
+type BlogFilter struct {
+	TitleContains string
+	UserID        *int64
+	Limit         int
+	Offset        int
 }
