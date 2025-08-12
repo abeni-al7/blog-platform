@@ -1,5 +1,26 @@
 # Blog Platform Backend API Documentation
 
+## Quickstart
+
+Follow these steps to get the API running locally.
+
+1) Prerequisites
+- Go 1.20+ and PostgreSQL running locally or reachable
+
+2) Create .env (project root) - follow .env.example
+
+3) Run the server (auto-migration enabled)
+```sh
+go run delivery/main.go
+```
+
+4) Use the API
+- Base URL: http://localhost:8000
+- Get tokens: POST /register, then POST /login
+- Send Authorization header: `Authorization: Bearer <ACCESS_TOKEN>` for protected routes
+
+Postman collection: https://documenter.getpostman.com/view/42847133/2sB3BEoViy
+
 ## Project Overview
 
 The Blog Platform backend is a robust RESTful API designed to power a modern blogging application. It provides secure user authentication, blog management, tagging, commenting, and administrative features. The backend is built for extensibility, maintainability, and security, enabling developers to build, customize, and scale the platform as needed.
@@ -7,8 +28,10 @@ The Blog Platform backend is a robust RESTful API designed to power a modern blo
 ### Main Features
 - User registration, login, profile management, and email activation
 - JWT-based authentication and role-based authorization (admin, user)
-- Blog CRUD (create, read, update, delete) with tagging and pagination
-- Commenting system for blogs
+- Blog CRUD (create, read, update, delete) with tagging
+- Pagination, filtering, and full-text search for blogs
+- Views, likes/unlikes, and popularity metrics per blog
+- Commenting system for blogs (create + list with pagination)
 - Password reset and account recovery
 - Admin controls for user promotion/demotion
 - AI-powered blog idea generation and improvement suggestions (optional)
@@ -49,6 +72,12 @@ The Blog Platform backend is a robust RESTful API designed to power a modern blo
 ---
 
 ## API Endpoints
+
+Base URL (local): http://localhost:8080
+
+Common headers for protected routes:
+- Authorization: Bearer <ACCESS_TOKEN>
+- Content-Type: application/json
 
 ### Users
 
@@ -114,10 +143,18 @@ Response:
 | GET    | /blogs                     | Yes          | List all blogs                    |
 | GET    | /blogs/:id                 | Yes          | Get a blog by ID                  |
 | DELETE | /blogs/:id                 | Owner/Admin  | Delete a blog                     |
+| PATCH  | /blogs/:id                 | Owner        | Update a blog (partial)           |
 | GET    | /blogs/paginated           | Yes          | Get paginated blogs               |
+| GET    | /blogs/search              | Yes          | Search blogs by title/content     |
 | GET    | /blogs/filter              | Yes          | Filter blogs by title/user with limit/offset |
+| POST   | /blogs/:id/view            | Yes          | Increment blog view count         |
+| POST   | /blogs/:id/like            | Yes          | Like a blog                       |
+| DELETE | /blogs/:id/like            | Yes          | Unlike a blog                     |
+| GET    | /blogs/:id/popularity      | Yes          | Get blog popularity (views, likes)|
 | POST   | /blogs/ideas               | Yes          | Generate blog ideas (AI)          |
 | POST   | /blogs/improve             | Yes          | Suggest blog improvements (AI)    |
+| POST   | /blogs/:id/comments        | Yes          | Add a comment to a blog           |
+| GET    | /blogs/:id/comments        | Yes          | List comments for a blog          |
 
 #### Example: Create Blog
 Request:
@@ -141,12 +178,88 @@ Response:
 }
 ```
 
+#### Example: Update Blog
+Request (PATCH /blogs/:id):
+```json
+{
+  "title": "Updated Title",
+  "content": "Updated content"
+}
+```
+Responses:
+- 200: `{ "message": "blog updated" }`
+- 404: `{ "error": "blog not found" }`
+
+#### Example: Paginated Blogs
+Request: GET /blogs/paginated?page=1&limit=10
+Response:
+```json
+{
+  "data": [ { "id": 1, "title": "..." } ],
+  "total": 42,
+  "page": 1,
+  "limit": 10,
+  "total_pages": 5
+}
+```
+
+#### Example: Search Blogs
+Request: GET /blogs/search?q=go&page=1&limit=10
+Responses:
+- 200:
+```json
+{
+  "blogs": [ { "id": 1, "title": "Go Tips" } ],
+  "meta": { "total": 5, "page": 1, "limit": 10 }
+}
+```
+- 400 when q missing: `{ "error": "q is required" }`
+
+#### Example: Track View / Like / Unlike / Popularity
+- Track view: POST /blogs/1/view → `{ "message": "view tracked" }`
+- Like: POST /blogs/1/like → `{ "message": "liked" }`
+- Unlike: DELETE /blogs/1/like → `{ "message": "unliked" }`
+- Popularity: GET /blogs/1/popularity → `{ "view_count": 12, "likes": 3 }`
+
 ---
 
 ### Comments
-*Assuming endpoints exist (not shown in router):*
-- `POST /blogs/:id/comments` — Add comment to blog
-- `GET /blogs/:id/comments` — List comments for a blog
+
+| Method | URL                   | Auth | Description                         |
+|--------|------------------------|------|-------------------------------------|
+| POST   | /blogs/:id/comments    | Yes  | Add a comment to a specific blog    |
+| GET    | /blogs/:id/comments    | Yes  | List comments (paginated) for a blog|
+
+Auth: Yes (Authorization header required)
+
+Add Comment request body:
+```json
+{ "content": "Nice article!" }
+```
+Response 201:
+```json
+{
+  "comment": {
+    "id": 10,
+    "content": "Nice article!",
+    "user_id": 1,
+    "blog_id": 2,
+    "created_at": "2025-08-12T10:00:00Z"
+  }
+}
+```
+
+List Comments request: GET /blogs/2/comments?page=1&limit=10
+Response 200:
+```json
+{
+  "comments": [
+    { "id": 10, "content": "Nice article!", "user_id": 1, "blog_id": 2 },
+    { "id": 11, "content": "Great read", "user_id": 3, "blog_id": 2 }
+  ],
+  "meta": { "total": 2, "page": 1, "limit": 10 }
+}
+```
 
 ---
 
@@ -240,12 +353,18 @@ Response:
 ## Testing
 
 - **Unit Tests:** For usecases, repositories, infrastructure
-- **Integration Tests:** For API endpoints
+- **Integration Tests:** API happy-path flows (login, create blog, list, etc.)
 - **Location:** `test/` directory
 - **Run all tests:**
   ```sh
   go test ./...
   ```
+
+Optional targeted runs:
+```sh
+go test ./test/usecases -v
+go test ./test/repositories -v
+```
 
 ---
 
@@ -273,6 +392,7 @@ SMTP_FROM=your@email.com
 PROTOCOL=http
 DOMAIN=localhost
 PORT=8080
+OPENAI_API_KEY=your_openai_api_key_optional
 ```
 
 ### Running Locally
@@ -283,6 +403,11 @@ PORT=8080
    ```sh
    go run delivery/main.go
    ```
+
+Login and use the API:
+1. Register: POST /register
+2. Login: POST /login → copy `access` token
+3. Call protected routes with header `Authorization: Bearer <access>`
 
 ### Deployment
 - Build: `go build -o blog-platform delivery/main.go`
@@ -302,7 +427,7 @@ PORT=8080
 
 ## Future Improvements
 
-- Add comment endpoints and moderation
+- Comment moderation and editing
 - Rate limiting and request logging
 - API documentation (Swagger/OpenAPI)
 - More granular permissions/roles
