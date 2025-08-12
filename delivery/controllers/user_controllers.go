@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -137,7 +138,7 @@ func (uc *UserController) Demote(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "user demoted to user"})
 }
-  
+
 func (uc *UserController) UpdateProfile(ctx *gin.Context) {
 	idParam := ctx.Param("id")
 	userID, err := strconv.ParseInt(idParam, 10, 64)
@@ -174,12 +175,14 @@ func (uc *UserController) ResetPassword(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
-	userIDVal, exists := ctx.Get("user_id")
+	userIDVal1, exists := ctx.Get("user_id")
 	if !exists {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
-	userID, _ := userIDVal.(string)
+	userIDVal, _ := userIDVal1.(int64)
+	userID := strconv.FormatInt(userIDVal, 10)
+	log.Println(userID)
 	if err := uc.userUsecase.ResetPassword(userID, body.OldPassword, body.NewPassword); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
