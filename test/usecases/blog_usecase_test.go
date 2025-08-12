@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/blog-platform/domain"
-	"github.com/blog-platform/mock"
+	"github.com/blog-platform/test/mocks"
 	"github.com/blog-platform/usecases"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -22,13 +22,13 @@ func (m *MockAIService) SuggestBlogImprovements(content string) (string, error) 
 
 type BlogUsecaseTestSuite struct {
 	suite.Suite
-	mockRepo *mock.MockBlogRepo
+	mockRepo *mocks.MockBlogRepo
 	mockAI   *MockAIService
 	usecase  domain.IBlogUsecase
 }
 
 func (suite *BlogUsecaseTestSuite) SetupTest() {
-	suite.mockRepo = new(mock.MockBlogRepo)
+	suite.mockRepo = new(mocks.MockBlogRepo)
 	suite.mockAI = &MockAIService{}
 	suite.usecase = usecases.NewBlogUsecase(suite.mockRepo, suite.mockAI)
 }

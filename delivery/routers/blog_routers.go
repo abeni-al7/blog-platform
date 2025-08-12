@@ -35,4 +35,8 @@ func BlogRoutes(router *gin.RouterGroup) {
 		blogRoutes.GET("/filter", bc.FilterBlogs)
 	}
 
+	router.POST("/blogs/:id/view", bc.TrackView)
+	router.POST("/blogs/:id/like", bc.LikeBlog)
+	router.DELETE("/blogs/:id/like", bc.UnlikeBlog)
+	router.GET("/blogs/:id/popularity", bc.GetPopularity)
 }

@@ -39,15 +39,34 @@ func (m *MockBlogRepo) FetchAll(ctx context.Context) ([]*domain.Blog, error) {
 	return args.Get(0).([]*domain.Blog), args.Error(1)
 }
 
-func (m *MockBlogRepo) DeleteByID(ctx context.Context, ID int64, userID string) error {
-	args := m.Called(ctx, ID, userID)
-	return args.Error(0)
-}
-
 func (m *MockBlogRepo) FetchPaginatedBlogs(ctx context.Context, page, limit int) ([]*domain.Blog, int64, error) {
 	args := m.Called(ctx, page, limit)
 	return args.Get(0).([]*domain.Blog), args.Get(1).(int64), args.Error(2)
+}
 
+func (m *MockBlogRepo) IncrementView(ctx context.Context, blogID int64) error {
+	args := m.Called(ctx, blogID)
+	return args.Error(0)
+}
+
+func (m *MockBlogRepo) AddLike(ctx context.Context, blogID int64, userID int64) error {
+	args := m.Called(ctx, blogID, userID)
+	return args.Error(0)
+}
+
+func (m *MockBlogRepo) RemoveLike(ctx context.Context, blogID int64, userID int64) error {
+	args := m.Called(ctx, blogID, userID)
+	return args.Error(0)
+}
+
+func (m *MockBlogRepo) GetPopularity(ctx context.Context, blogID int64) (int, int, error) {
+	args := m.Called(ctx, blogID)
+	return args.Int(0), args.Int(1), args.Error(2)
+}
+
+func (m *MockBlogRepo) DeleteByID(ctx context.Context, ID int64, userID string) error {
+	args := m.Called(ctx, ID, userID)
+	return args.Error(0)
 }
 
 func (m *MockBlogRepo) UpdateByID(ctx context.Context, id int64, userID string, updates map[string]interface{}) error {
