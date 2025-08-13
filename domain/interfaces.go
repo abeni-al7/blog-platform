@@ -10,6 +10,7 @@ type IBlogRepository interface {
 	LinkTagToBlog(ctx context.Context, blogID int64, tagID int64) error
 	FetchByID(ctx context.Context, id int64) (*Blog, error)
 	FetchAll(ctx context.Context) ([]*Blog, error)
+	GetBlogAuthorID(ctx context.Context, id int64) (int64, error)
 	IncrementView(ctx context.Context, blogID int64) error
 	AddLike(ctx context.Context, blogID int64, userID int64) error // userID optional, ignored
 	RemoveLike(ctx context.Context, blogID int64, userID int64) error

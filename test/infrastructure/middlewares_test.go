@@ -17,13 +17,15 @@ import (
 type MiddlewareTestSuite struct {
 	suite.Suite
 	mockJWTService *mocks.MockJWTService
+	mockBlogRepo   *mocks.MockBlogRepo
 	middleware     *infrastructure.Middleware
 	router         *gin.Engine
 }
 
 func (suite *MiddlewareTestSuite) SetupTest() {
 	suite.mockJWTService = new(mocks.MockJWTService)
-	suite.middleware = infrastructure.NewMiddleware(suite.mockJWTService)
+	suite.mockBlogRepo = new(mocks.MockBlogRepo)
+	suite.middleware = infrastructure.NewMiddleware(suite.mockJWTService, suite.mockBlogRepo)
 	suite.router = gin.Default()
 }
 

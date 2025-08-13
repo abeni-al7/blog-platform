@@ -39,6 +39,11 @@ func (m *MockBlogRepo) FetchAll(ctx context.Context) ([]*domain.Blog, error) {
 	return args.Get(0).([]*domain.Blog), args.Error(1)
 }
 
+func (m *MockBlogRepo) GetBlogAuthorID(ctx context.Context, id int64) (int64, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(int64), args.Error(1)
+}
+
 func (m *MockBlogRepo) FetchPaginatedBlogs(ctx context.Context, page, limit int) ([]*domain.Blog, int64, error) {
 	args := m.Called(ctx, page, limit)
 	return args.Get(0).([]*domain.Blog), args.Get(1).(int64), args.Error(2)

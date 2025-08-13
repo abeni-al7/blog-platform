@@ -93,6 +93,14 @@ func (r *BlogRepository) FetchAll(ctx context.Context) ([]*domain.Blog, error) {
 	return blogs, nil
 }
 
+func (r *BlogRepository) GetBlogAuthorID(ctx context.Context, id int64) (int64, error) {
+	var b domain.Blog
+	if err := r.db.WithContext(ctx).Select("user_id").First(&b, id).Error; err != nil {
+		return 0, err
+	}
+	return b.UserID, nil
+}
+
 func (r *BlogRepository) DeleteByID(ctx context.Context, ID int64, userID string) error {
 	result := r.db.WithContext(ctx).
 		Where("id = ? AND user_id = ?", ID, userID).
