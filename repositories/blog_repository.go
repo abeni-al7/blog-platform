@@ -32,6 +32,10 @@ func (r *BlogRepository) Create(ctx context.Context, blog *domain.Blog) error {
 	if err := r.db.WithContext(ctx).Create(blog).Error; err != nil {
 		return err
 	}
+
+	if err := r.db.WithContext(ctx).Preload("User").First(blog, blog.ID).Error; err != nil {
+		return err
+	}
 	// invalidate caches
 	r.c.Clear()
 	return nil
